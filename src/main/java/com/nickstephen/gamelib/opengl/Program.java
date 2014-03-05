@@ -7,9 +7,9 @@ import android.opengl.GLES20;
  */
 public abstract class Program {
 
-    private int programHandle;
-    private int vertexShaderHandle;
-    private int fragmentShaderHandle;
+    private int mProgramHandle;
+    private int mVertexShaderHandle;
+    private int mFragmentShaderHandle;
     private boolean mInitialized;
 
     public Program() {
@@ -21,27 +21,27 @@ public abstract class Program {
     }
 
     public void init(String vertexShaderCode, String fragmentShaderCode, AttribVariable[] programVariables) {
-        vertexShaderHandle = Utilities.loadShader(GLES20.GL_VERTEX_SHADER, vertexShaderCode);
-        fragmentShaderHandle = Utilities.loadShader(GLES20.GL_FRAGMENT_SHADER, fragmentShaderCode);
+        mVertexShaderHandle = Utilities.loadShader(GLES20.GL_VERTEX_SHADER, vertexShaderCode);
+        mFragmentShaderHandle = Utilities.loadShader(GLES20.GL_FRAGMENT_SHADER, fragmentShaderCode);
 
-        programHandle = Utilities.createProgram(
-                vertexShaderHandle, fragmentShaderHandle, programVariables);
+        mProgramHandle = Utilities.createProgram(
+                mVertexShaderHandle, mFragmentShaderHandle, programVariables);
 
         mInitialized = true;
     }
 
     public int getHandle() {
-        return programHandle;
+        return mProgramHandle;
     }
 
     public void delete() {
-        GLES20.glDeleteShader(vertexShaderHandle);
-        GLES20.glDeleteShader(fragmentShaderHandle);
-        GLES20.glDeleteProgram(programHandle);
+        GLES20.glDeleteShader(mVertexShaderHandle);
+        GLES20.glDeleteShader(mFragmentShaderHandle);
+        GLES20.glDeleteProgram(mProgramHandle);
         mInitialized = false;
     }
 
-    public boolean initialized() {
+    public boolean isInitialized() {
         return mInitialized;
     }
 }

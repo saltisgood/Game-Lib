@@ -10,7 +10,7 @@ import java.nio.FloatBuffer;
  * Created by Nick Stephen on 5/03/14.
  */
 public class Triangle {
-    private final String vertexShaderCode =
+    private final String mVertexShaderCode =
             // This matrix member variable provides a hook to manipulate
             // the coordinates of the objects that use this vertex shader
             "uniform mat4 uMVPMatrix;" +
@@ -22,14 +22,14 @@ public class Triangle {
                     "  gl_Position = uMVPMatrix * vPosition;" +
                     "}";
 
-    private final String fragmentShaderCode =
+    private final String mFragmentShaderCode =
             "precision mediump float;" +
                     "uniform vec4 vColor;" +
                     "void main() {" +
                     "  gl_FragColor = vColor;" +
                     "}";
 
-    private final FloatBuffer vertexBuffer;
+    private final FloatBuffer mVertexBuffer;
     private final int mProgram;
     private int mPositionHandle;
     private int mColorHandle;
@@ -60,17 +60,17 @@ public class Triangle {
         bb.order(ByteOrder.nativeOrder());
 
         // create a floating point buffer from the ByteBuffer
-        vertexBuffer = bb.asFloatBuffer();
+        mVertexBuffer = bb.asFloatBuffer();
         // add the coordinates to the FloatBuffer
-        vertexBuffer.put(triangleCoords);
+        mVertexBuffer.put(triangleCoords);
         // set the buffer to read the first coordinate
-        vertexBuffer.position(0);
+        mVertexBuffer.position(0);
 
         // prepare shaders and OpenGL program
-        int vertexShader = RendererUtil.loadShader(
-                GLES20.GL_VERTEX_SHADER, vertexShaderCode);
-        int fragmentShader = RendererUtil.loadShader(
-                GLES20.GL_FRAGMENT_SHADER, fragmentShaderCode);
+        int vertexShader = Utilities.loadShader(
+                GLES20.GL_VERTEX_SHADER, mVertexShaderCode);
+        int fragmentShader = Utilities.loadShader(
+                GLES20.GL_FRAGMENT_SHADER, mFragmentShaderCode);
 
         mProgram = GLES20.glCreateProgram();             // create empty OpenGL Program
         GLES20.glAttachShader(mProgram, vertexShader);   // add the vertex shader to program
@@ -92,14 +92,14 @@ public class Triangle {
         // get handle to vertex shader's vPosition member
         mPositionHandle = GLES20.glGetAttribLocation(mProgram, "vPosition");
 
-        // Enable a handle to the triangle vertices
+        // Enable a handle to the triangle mVertices
         GLES20.glEnableVertexAttribArray(mPositionHandle);
 
         // Prepare the triangle coordinate data
         GLES20.glVertexAttribPointer(
                 mPositionHandle, COORDS_PER_VERTEX,
                 GLES20.GL_FLOAT, false,
-                vertexStride, vertexBuffer);
+                vertexStride, mVertexBuffer);
 
         // get handle to fragment shader's vColor member
         mColorHandle = GLES20.glGetUniformLocation(mProgram, "vColor");
@@ -109,11 +109,11 @@ public class Triangle {
 
         // get handle to shape's transformation matrix
         mMVPMatrixHandle = GLES20.glGetUniformLocation(mProgram, "uMVPMatrix");
-        RendererUtil.checkGlError("glGetUniformLocation");
+        Utilities.checkGlError("glGetUniformLocation");
 
         // Apply the projection and view transformation
         GLES20.glUniformMatrix4fv(mMVPMatrixHandle, 1, false, mvpMatrix, 0);
-        RendererUtil.checkGlError("glUniformMatrix4fv");
+        Utilities.checkGlError("glUniformMatrix4fv");
 
         // Draw the triangle
         GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, vertexCount);

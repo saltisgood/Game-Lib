@@ -12,7 +12,7 @@ import java.nio.ShortBuffer;
  */
 public class Square {
 
-    private final String vertexShaderCode =
+    private final String mVertexShaderCode =
             // This matrix member variable provides a hook to manipulate
             // the coordinates of the objects that use this vertex shader
             "uniform mat4 uMVPMatrix;" +
@@ -24,15 +24,15 @@ public class Square {
                     "  gl_Position = uMVPMatrix * vPosition;" +
                     "}";
 
-    private final String fragmentShaderCode =
+    private final String mFragmentShaderCode =
             "precision mediump float;" +
                     "uniform vec4 vColor;" +
                     "void main() {" +
                     "  gl_FragColor = vColor;" +
                     "}";
 
-    private final FloatBuffer vertexBuffer;
-    private final ShortBuffer drawListBuffer;
+    private final FloatBuffer mVertexBuffer;
+    private final ShortBuffer mDrawListBuffer;
     private final int mProgram;
     private int mPositionHandle;
     private int mColorHandle;
@@ -46,7 +46,7 @@ public class Square {
             0.5f, -0.5f, 0.0f,   // bottom right
             0.5f,  0.5f, 0.0f }; // top right
 
-    private final short drawOrder[] = { 0, 1, 2, 0, 2, 3 }; // order to draw vertices
+    private final short drawOrder[] = { 0, 1, 2, 0, 2, 3 }; // order to draw mVertices
 
     private final int vertexStride = COORDS_PER_VERTEX * 4; // 4 bytes per vertex
 
@@ -61,26 +61,26 @@ public class Square {
                 // (# of coordinate values * 4 bytes per float)
                 squareCoords.length * 4);
         bb.order(ByteOrder.nativeOrder());
-        vertexBuffer = bb.asFloatBuffer();
-        vertexBuffer.put(squareCoords);
-        vertexBuffer.position(0);
+        mVertexBuffer = bb.asFloatBuffer();
+        mVertexBuffer.put(squareCoords);
+        mVertexBuffer.position(0);
 
         // initialize byte buffer for the draw list
         ByteBuffer dlb = ByteBuffer.allocateDirect(
                 // (# of coordinate values * 2 bytes per short)
                 drawOrder.length * 2);
         dlb.order(ByteOrder.nativeOrder());
-        drawListBuffer = dlb.asShortBuffer();
-        drawListBuffer.put(drawOrder);
-        drawListBuffer.position(0);
+        mDrawListBuffer = dlb.asShortBuffer();
+        mDrawListBuffer.put(drawOrder);
+        mDrawListBuffer.position(0);
 
         // prepare shaders and OpenGL program
-        int vertexShader = RendererUtil.loadShader(
+        int vertexShader = Utilities.loadShader(
                 GLES20.GL_VERTEX_SHADER,
-                vertexShaderCode);
-        int fragmentShader = RendererUtil.loadShader(
+                mVertexShaderCode);
+        int fragmentShader = Utilities.loadShader(
                 GLES20.GL_FRAGMENT_SHADER,
-                fragmentShaderCode);
+                mFragmentShaderCode);
 
         mProgram = GLES20.glCreateProgram();             // create empty OpenGL Program
         GLES20.glAttachShader(mProgram, vertexShader);   // add the vertex shader to program
@@ -101,14 +101,14 @@ public class Square {
         // get handle to vertex shader's vPosition member
         mPositionHandle = GLES20.glGetAttribLocation(mProgram, "vPosition");
 
-        // Enable a handle to the triangle vertices
+        // Enable a handle to the triangle mVertices
         GLES20.glEnableVertexAttribArray(mPositionHandle);
 
         // Prepare the triangle coordinate data
         GLES20.glVertexAttribPointer(
                 mPositionHandle, COORDS_PER_VERTEX,
                 GLES20.GL_FLOAT, false,
-                vertexStride, vertexBuffer);
+                vertexStride, mVertexBuffer);
 
         // get handle to fragment shader's vColor member
         mColorHandle = GLES20.glGetUniformLocation(mProgram, "vColor");
@@ -118,16 +118,16 @@ public class Square {
 
         // get handle to shape's transformation matrix
         mMVPMatrixHandle = GLES20.glGetUniformLocation(mProgram, "uMVPMatrix");
-        RendererUtil.checkGlError("glGetUniformLocation");
+        Utilities.checkGlError("glGetUniformLocation");
 
         // Apply the projection and view transformation
         GLES20.glUniformMatrix4fv(mMVPMatrixHandle, 1, false, mvpMatrix, 0);
-        RendererUtil.checkGlError("glUniformMatrix4fv");
+        Utilities.checkGlError("glUniformMatrix4fv");
 
         // Draw the square
         GLES20.glDrawElements(
                 GLES20.GL_TRIANGLES, drawOrder.length,
-                GLES20.GL_UNSIGNED_SHORT, drawListBuffer);
+                GLES20.GL_UNSIGNED_SHORT, mDrawListBuffer);
 
         // Disable vertex array
         GLES20.glDisableVertexAttribArray(mPositionHandle);

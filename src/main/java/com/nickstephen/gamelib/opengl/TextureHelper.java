@@ -17,6 +17,7 @@ public class TextureHelper {
 
         return loadTexture(bitmap);
     }
+
     public static int loadTexture(Bitmap bitmap)
     {
         final int[] textureHandle = new int[1];
@@ -25,12 +26,6 @@ public class TextureHelper {
 
         if (textureHandle[0] != 0)
         {
-//	        final BitmapFactory.Options options = new BitmapFactory.Options();
-//	        options.inScaled = false;   // No pre-scaling
-
-            // Read in the resource
-//	        final Bitmap bitmap = BitmapFactory.decodeResource(context.getResources(), resourceId, options);
-
             // Bind to the texture in OpenGL
             GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textureHandle[0]);
 
