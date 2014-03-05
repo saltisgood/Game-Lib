@@ -75,10 +75,10 @@ public class Square {
         drawListBuffer.position(0);
 
         // prepare shaders and OpenGL program
-        int vertexShader = OpenGLRenderer.loadShader(
+        int vertexShader = RendererUtil.loadShader(
                 GLES20.GL_VERTEX_SHADER,
                 vertexShaderCode);
-        int fragmentShader = OpenGLRenderer.loadShader(
+        int fragmentShader = RendererUtil.loadShader(
                 GLES20.GL_FRAGMENT_SHADER,
                 fragmentShaderCode);
 
@@ -118,11 +118,11 @@ public class Square {
 
         // get handle to shape's transformation matrix
         mMVPMatrixHandle = GLES20.glGetUniformLocation(mProgram, "uMVPMatrix");
-        OpenGLRenderer.checkGlError("glGetUniformLocation");
+        RendererUtil.checkGlError("glGetUniformLocation");
 
         // Apply the projection and view transformation
         GLES20.glUniformMatrix4fv(mMVPMatrixHandle, 1, false, mvpMatrix, 0);
-        OpenGLRenderer.checkGlError("glUniformMatrix4fv");
+        RendererUtil.checkGlError("glUniformMatrix4fv");
 
         // Draw the square
         GLES20.glDrawElements(
