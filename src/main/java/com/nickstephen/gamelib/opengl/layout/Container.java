@@ -1,6 +1,9 @@
 package com.nickstephen.gamelib.opengl.layout;
 
+import android.content.Context;
 import android.opengl.GLES20;
+import android.opengl.GLSurfaceView;
+import android.view.MotionEvent;
 
 import com.nickstephen.gamelib.opengl.Shape;
 import com.nickstephen.gamelib.opengl.Utilities;
@@ -9,13 +12,17 @@ import com.nickstephen.lib.VersionControl;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * Created by Nick Stephen on 6/03/14.
  */
 public class Container extends Shape {
     public static final float SIZE_UNLIMITED = -1.0f;
+
+    protected final List<Shape> mChildren;
 
     private float mPosX;
     private float mPosY;
@@ -27,12 +34,14 @@ public class Container extends Shape {
 
     private boolean mIsScrollable = true;
 
-    public Container(float width, float height) {
-        this(width, height, 0.0f, 0.0f);
+    public Container(Context context, float width, float height) {
+        this(context, width, height, 0.0f, 0.0f);
     }
 
-    public Container(float width, float height, float startingPosX, float startingPosY) {
-        super();
+    public Container(Context context, float width, float height, float startingPosX, float startingPosY) {
+        super(context);
+
+        mChildren = new ArrayList<Shape>();
 
         ByteBuffer bb = ByteBuffer.allocateDirect(3 * 4 * 4); // 3 coords/vertex * 4 vertices * 4 bytes/float
         bb.order(ByteOrder.nativeOrder());
@@ -76,6 +85,10 @@ public class Container extends Shape {
 
     @Override
     public void draw(float[] VPMatrix) {
+        for (Shape shape : mChildren) {
+            shape.draw(VPMatrix);
+        }
+
         if (VersionControl.IS_RELEASE) {
             return;
         }
@@ -104,9 +117,33 @@ public class Container extends Shape {
         Utilities.checkGlError("glUniformMatrix4fv");
 
         // Draw the box
+        GLES20.glLineWidth(5.0f);
         GLES20.glDrawArrays(GLES20.GL_LINE_LOOP, 0, 4);
+        GLES20.glLineWidth(1.0f);
 
         // Disable vertex array
         GLES20.glDisableVertexAttribArray(mPositionHandle);
+    }
+
+
+    public boolean onTouchEvent(MotionEvent e) {
+        if (this.getParent() != null) {
+            throw new RuntimeException("This method should only be called from the root container");
+        }
+
+        float relX = e.getRawX() - (mWidth / 2.0f);
+        float relY = -(e.getRawY() - (mHeight / 2.0f));
+
+        for (Shape shape : mChildren) {
+            if (shape.onTouchEvent(e, relX, relY)) {
+                return true;
+            }
+        }
+
+        if (mIsScrollable) {
+            //TODO: Implement
+        }
+
+        return false;
     }
 }

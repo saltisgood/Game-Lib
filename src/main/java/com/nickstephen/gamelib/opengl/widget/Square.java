@@ -1,5 +1,7 @@
 package com.nickstephen.gamelib.opengl.widget;
 
+import android.content.Context;
+
 import com.nickstephen.gamelib.opengl.Polygon;
 
 /**
@@ -11,19 +13,19 @@ public class Square extends Polygon {
     /**
      * Sets up the drawing object data for use in an OpenGL ES context.
      */
-    public Square(float posX, float posY, float radius) {
-        super(posX, posY, radius, 0, 4, color);
+    public Square(Context context, float posX, float posY, float radius) {
+        super(context, posX, posY, radius, 0, 4, color);
     }
 
-    public Square() {
-        super(0, 0, 100.0f, 0, 4, color);
+    public Square(Context context) {
+        super(context, 0, 0, 100.0f, 0, 4, color);
     }
 
-    public Square(float posX, float posY, float radius, float angle) {
-        super(posX, posY, radius, angle, 4, color);
+    public Square(Context context, float posX, float posY, float radius, float angle) {
+        super(context, posX, posY, radius, angle, 4, color);
     }
 
-    public Square(float posX, float posY, float radius, float angle, float[] colour) {
-        super(posX, posY, radius, angle, 4, colour);
+    public Square(Context context, float posX, float posY, float radius, float angle, float[] colour) {
+        super(context, posX, posY, radius, angle, 4, colour);
     }
 }

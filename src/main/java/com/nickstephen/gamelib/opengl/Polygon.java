@@ -1,5 +1,6 @@
 package com.nickstephen.gamelib.opengl;
 
+import android.content.Context;
 import android.opengl.GLES20;
 
 import com.nickstephen.gamelib.opengl.program.GenericProgram;
@@ -37,8 +38,11 @@ public class Polygon extends Shape {
 
     private final int vertexStride = COORDS_PER_VERTEX * 4; // 4 bytes per vertex
 
-    public Polygon(float posX, float posY, float radius, float angle, int numberOfSides, float[] colour) {
+    public Polygon(Context context, float posX, float posY, float radius, float angle, int numberOfSides, float[] colour) {
+        super(context);
+
         mRadius = radius;
+        setSize(radius);
 
         mSideCount = numberOfSides;
         mTheta = 2.0f * 3.14159f / (float)mSideCount;
@@ -76,12 +80,12 @@ public class Polygon extends Shape {
         mDrawListBuffer.position(0);
     }
 
-    public Polygon(float posX, float posY, float radius, int numberOfSides) {
-        this(posX, posY, radius, 0, numberOfSides, color);
+    public Polygon(Context context, float posX, float posY, float radius, int numberOfSides) {
+        this(context, posX, posY, radius, 0, numberOfSides, color);
     }
 
-    public Polygon(float posX, float posY, float radius, float angle, int numberOfSides) {
-        this(posX, posY, radius, angle, numberOfSides, color);
+    public Polygon(Context context, float posX, float posY, float radius, float angle, int numberOfSides) {
+        this(context, posX, posY, radius, angle, numberOfSides, color);
     }
 
     @Override

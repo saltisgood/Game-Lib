@@ -1,5 +1,8 @@
 package com.nickstephen.gamelib;
 
+import android.content.Context;
+import android.os.Vibrator;
+
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -7,6 +10,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public final class GeneralUtil {
     private GeneralUtil() {} // Don't call!
+
+    private static Vibrator sVibrator;
 
     public static @NotNull float[] arrayCopy(@NotNull float[] input) {
         float[] array = new float[input.length];
@@ -26,5 +31,15 @@ public final class GeneralUtil {
         }
 
         return ave;
+    }
+
+    public static void setupVibrator(@NotNull Context context) {
+        sVibrator = (Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
+    }
+
+    public static void vibrate(long time) {
+        if (sVibrator != null) {
+            sVibrator.vibrate(time);
+        }
     }
 }
