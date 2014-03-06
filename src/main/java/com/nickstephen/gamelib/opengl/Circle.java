@@ -5,6 +5,7 @@ import android.opengl.GLES20;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
+import java.nio.ShortBuffer;
 
 /**
  * Created by Nick Stephen on 6/03/14.
@@ -34,6 +35,7 @@ public class Circle {
                     "}";
 
     private final FloatBuffer mVertexBuffer;
+    private final ShortBuffer mDrawListBuffer;
     private final int mProgram;
     private int mPositionHandle;
     private int mColorHandle;
@@ -61,7 +63,7 @@ public class Circle {
         mRadialFactor = (float)Math.cos(mTheta);
 
         // Initialise vertex byte buffer for shape coordinates
-        ByteBuffer bb = ByteBuffer.allocateDirect(3 * NUM_SEGMENTS * 4); // Number of vertices * 4 bytes per float
+        ByteBuffer bb = ByteBuffer.allocateDirect((3 * (NUM_SEGMENTS + 1)) * 4); // Number of vertices * 4 bytes per float
         // Use the device's native byte order
         bb.order(ByteOrder.nativeOrder());
 
@@ -71,8 +73,12 @@ public class Circle {
         // Calculate the vertex positions
         float x = radius;
         float y = 0;
-        float[] buff = new float[3 * NUM_SEGMENTS];
-        for (int i = 0; i < NUM_SEGMENTS; i++) {
+        float[] buff = new float[3 * (NUM_SEGMENTS + 1)];
+
+        buff[0] = posX;
+        buff[1] = posY;
+        buff[2] = 0;
+        for (int i = 1; i < NUM_SEGMENTS + 1; i++) {
             buff[3 * i] = x + posX;
             buff[3 * i + 1] = y + posY;
             buff[3 * i + 2] = 0;
@@ -90,6 +96,21 @@ public class Circle {
         mVertexBuffer.put(buff);
         // Reset the buffer's position back to the first coordinate
         mVertexBuffer.position(0);
+
+        // initialize byte buffer for the draw list
+        // (Number of segments * 3 lines per triangle * 2 bytes per short)
+        ByteBuffer dlb = ByteBuffer.allocateDirect(NUM_SEGMENTS * 3 * 2);
+        dlb.order(ByteOrder.nativeOrder());
+        mDrawListBuffer = dlb.asShortBuffer();
+
+        short[] order = new short[3 * NUM_SEGMENTS];
+        for (int i = 0; i < NUM_SEGMENTS; i++) {
+            order[3 * i] = 0;
+            order[3 * i + 1] = (short)(i + 1);
+            order[3 * i + 2] = (i + 2 <= NUM_SEGMENTS) ? (short)(i + 2) : 1;
+        }
+        mDrawListBuffer.put(order);
+        mDrawListBuffer.position(0);
 
         // prepare shaders and OpenGL program
         int vertexShader = Utilities.loadShader(GLES20.GL_VERTEX_SHADER, mVertexShaderCode);
@@ -132,7 +153,9 @@ public class Circle {
         Utilities.checkGlError("glUniformMatrix4fv");
 
         // Draw the circle
-        GLES20.glDrawArrays(GLES20.GL_LINE_LOOP, 0, NUM_SEGMENTS);
+        //GLES20.glDrawArrays(GLES20.GL_LINE_LOOP, 0, NUM_SEGMENTS);
+        GLES20.glDrawElements(GLES20.GL_TRIANGLE_FAN, 3 * NUM_SEGMENTS, GLES20.GL_UNSIGNED_SHORT,
+                mDrawListBuffer);
 
         // Disable vertex array
         GLES20.glDisableVertexAttribArray(mPositionHandle);
