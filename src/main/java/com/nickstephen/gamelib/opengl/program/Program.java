@@ -1,6 +1,9 @@
-package com.nickstephen.gamelib.opengl;
+package com.nickstephen.gamelib.opengl.program;
 
 import android.opengl.GLES20;
+
+import com.nickstephen.gamelib.opengl.AttribVariable;
+import com.nickstephen.gamelib.opengl.Utilities;
 
 /**
  * Created by Nick Stephen on 6/03/14.

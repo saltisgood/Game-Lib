@@ -8,7 +8,8 @@ import android.graphics.Typeface;
 import android.opengl.GLES20;
 import android.opengl.Matrix;
 
-import com.nickstephen.gamelib.opengl.eg.BatchTextProgram;
+import com.nickstephen.gamelib.opengl.program.BatchTextProgram;
+import com.nickstephen.gamelib.opengl.program.Program;
 
 /**
  * Created by Nick Stephen on 6/03/14.

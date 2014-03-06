@@ -2,15 +2,22 @@ package com.nickstephen.gamelib.opengl.widget;
 
 import android.content.res.AssetManager;
 
+import com.nickstephen.gamelib.GeneralUtil;
 import com.nickstephen.gamelib.opengl.GLText;
 
 /**
  * Created by Nick Stephen on 6/03/14.
  */
 public class FPSMeter extends GLText {
-    private long mLastTick;
+    private static final int FRAMES_BEFORE_UPDATE = 5;
+
     private float mX;
     private float mY;
+    private String mText = "0";
+
+    private long mLastTick;
+    private long[] mTickTimes = new long[FRAMES_BEFORE_UPDATE];
+    private int mTickIndex;
 
     public FPSMeter(AssetManager assets) {
         super(assets);
@@ -19,11 +26,18 @@ public class FPSMeter extends GLText {
     public void onDrawFrame(float[] vpMatrix) {
         this.begin(vpMatrix);
 
+        if (mTickIndex == FRAMES_BEFORE_UPDATE) {
+            long ave = GeneralUtil.arrayAverage(mTickTimes);
+            mText = Long.valueOf(1000 / ave).toString();
+            mTickIndex = 0;
+        }
+
         long currentTime = System.currentTimeMillis();
         if (mLastTick != 0) {
-            draw(Float.valueOf(1000.0f / (currentTime - mLastTick)).toString().split("\\.")[0], mX, mY);
+            mTickTimes[mTickIndex++] = currentTime - mLastTick;
         }
         mLastTick = currentTime;
+        draw(mText, mX, mY);
 
         this.end();
     }
