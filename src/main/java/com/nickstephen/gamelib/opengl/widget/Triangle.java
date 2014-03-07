@@ -3,6 +3,10 @@ package com.nickstephen.gamelib.opengl.widget;
 import android.content.Context;
 
 import com.nickstephen.gamelib.opengl.Polygon;
+import com.nickstephen.gamelib.opengl.layout.Container;
+
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Created by Nick Stephen on 5/03/14.
@@ -13,19 +17,19 @@ public class Triangle extends Polygon {
     /**
      * Sets up the drawing object data for use in an OpenGL ES context.
      */
-    public Triangle(Context context) {
-        super(context, 0, 0, 100.0f, 0, 3, color);
+    public Triangle(@NotNull Context context, @Nullable Container parent) {
+        super(context, parent, 0, 0, 100.0f, 0, 3, color);
     }
 
-    public Triangle(Context context, float posX, float posY, float radius) {
-        super(context, posX, posY, radius, 0, 3, color);
+    public Triangle(@NotNull Context context, @Nullable Container parent, float posX, float posY, float radius) {
+        super(context, parent, posX, posY, radius, 0, 3, color);
     }
 
-    public Triangle(Context context, float posX, float posY, float radius, float angle) {
-        super(context, posX, posY, radius, angle, 3, color);
+    public Triangle(@NotNull Context context, @Nullable Container parent, float posX, float posY, float radius, float angle) {
+        super(context, parent, posX, posY, radius, angle, 3, color);
     }
 
-    public Triangle(Context context, float posX, float posY, float radius, float angle, float[] colour) {
-        super(context, posX, posY, radius, angle, 3, colour);
+    public Triangle(@NotNull Context context, @Nullable Container parent, float posX, float posY, float radius, float angle, float[] colour) {
+        super(context, parent, posX, posY, radius, angle, 3, colour);
     }
 }

@@ -3,8 +3,12 @@ package com.nickstephen.gamelib.opengl;
 import android.content.Context;
 import android.opengl.GLES20;
 
+import com.nickstephen.gamelib.opengl.layout.Container;
 import com.nickstephen.gamelib.opengl.program.GenericProgram;
 import com.nickstephen.gamelib.opengl.program.Program;
+
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -38,8 +42,8 @@ public class Polygon extends Shape {
 
     private final int vertexStride = COORDS_PER_VERTEX * 4; // 4 bytes per vertex
 
-    public Polygon(Context context, float posX, float posY, float radius, float angle, int numberOfSides, float[] colour) {
-        super(context);
+    public Polygon(Context context, Container parent, float posX, float posY, float radius, float angle, int numberOfSides, float[] colour) {
+        super(context, parent);
 
         mRadius = radius;
         setSize(radius);
@@ -80,12 +84,12 @@ public class Polygon extends Shape {
         mDrawListBuffer.position(0);
     }
 
-    public Polygon(Context context, float posX, float posY, float radius, int numberOfSides) {
-        this(context, posX, posY, radius, 0, numberOfSides, color);
+    public Polygon(@NotNull Context context, @Nullable Container parent, float posX, float posY, float radius, int numberOfSides) {
+        this(context, parent, posX, posY, radius, 0, numberOfSides, color);
     }
 
-    public Polygon(Context context, float posX, float posY, float radius, float angle, int numberOfSides) {
-        this(context, posX, posY, radius, angle, numberOfSides, color);
+    public Polygon(@NotNull Context context, @Nullable Container parent, float posX, float posY, float radius, float angle, int numberOfSides) {
+        this(context, parent, posX, posY, radius, angle, numberOfSides, color);
     }
 
     @Override

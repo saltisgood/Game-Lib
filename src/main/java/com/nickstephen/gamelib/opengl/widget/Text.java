@@ -1,14 +1,14 @@
 package com.nickstephen.gamelib.opengl.widget;
 
 import android.content.Context;
-import android.opengl.GLSurfaceView;
 
-import com.nickstephen.gamelib.GeneralUtil;
 import com.nickstephen.gamelib.opengl.GLText;
 import com.nickstephen.gamelib.opengl.Shape;
+import com.nickstephen.gamelib.opengl.layout.Container;
 import com.nickstephen.gamelib.opengl.program.BatchTextProgram;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Created by Nick Stephen on 7/03/14.
@@ -18,8 +18,8 @@ public class Text extends Shape {
     private String mText;
     private boolean mCentered = true;
 
-    public Text(@NotNull Context context, @NotNull String text, @NotNull String fontPath) {
-        super(context, new BatchTextProgram());
+    public Text(@NotNull Context context, @Nullable Container parent, @NotNull String text, @NotNull String fontPath) {
+        super(context, parent, new BatchTextProgram());
 
         mTextInstance = new GLText(context.getAssets());
         mTextInstance.load(fontPath, 40, 0, 0);

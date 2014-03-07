@@ -10,12 +10,14 @@ import android.view.View;
 import android.view.ViewConfiguration;
 
 import com.nickstephen.gamelib.GeneralUtil;
+import com.nickstephen.gamelib.opengl.layout.Container;
 import com.nickstephen.gamelib.opengl.program.GenericProgram;
 import com.nickstephen.gamelib.opengl.program.Program;
 import com.nickstephen.gamelib.opengl.widget.IOnClickL;
 import com.nickstephen.gamelib.opengl.widget.ITouchL;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Created by Nick Stephen on 6/03/14.
@@ -32,10 +34,9 @@ public abstract class Shape implements ITouchL {
     private boolean mLongClickable = false;
     private IOnClickL mOnClickListener;
     private IOnClickL mOnLongClickListener;
-    private Shape mParent;
+    private Container mParent;
     private boolean mHasPerformedLongPress = false;
     private int mPrivateFlags;
-    private int mViewFlags;
     private CheckForLongPress mPendingCheckForLongPress;
     private CheckForTap mPendingCheckForTap;
     private UnsetPressedState mUnsetPressedState;
@@ -69,20 +70,31 @@ public abstract class Shape implements ITouchL {
      */
     private float mDown;
 
-    public Shape(Context context) {
+    public Shape(@NotNull Context context, @Nullable Container parent) {
         mProgram = new GenericProgram();
         mProgram.init();
 
         mTouchSlop = ViewConfiguration.get(context).getScaledTouchSlop();
+
+        mParent = parent;
+
+        if (parent != null) {
+            mSurface = parent.getSurface();
+        }
     }
 
-    public Shape(@NotNull Context context, @NotNull Program program) {
+    public Shape(@NotNull Context context, @Nullable Container parent, @NotNull Program program) {
         mProgram = program;
         if (!mProgram.isInitialized()) {
             mProgram.init();
         }
 
         mTouchSlop = ViewConfiguration.get(context).getScaledTouchSlop();
+        mParent = parent;
+
+        if (parent != null) {
+            mSurface = parent.getSurface();
+        }
     }
 
     public void setSurface(GLSurfaceView surface) {
@@ -316,7 +328,7 @@ public abstract class Shape implements ITouchL {
         return mBaseY;
     }
 
-    public Shape getParent() {
+    public @Nullable Container getParent() {
         return mParent;
     }
 
@@ -350,6 +362,10 @@ public abstract class Shape implements ITouchL {
             mOnLongClickListener.onClick(this);
         }
         return true;
+    }
+
+    public @Nullable GLSurfaceView getSurface() {
+        return mSurface;
     }
 
     public abstract void draw(float[] VPMatrix);

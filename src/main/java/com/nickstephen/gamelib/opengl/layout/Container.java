@@ -9,6 +9,9 @@ import com.nickstephen.gamelib.opengl.Shape;
 import com.nickstephen.gamelib.opengl.Utilities;
 import com.nickstephen.lib.VersionControl;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
@@ -34,6 +37,9 @@ public class Container extends Shape {
     private float mParentOffsetX;
     private float mParentOffsetY;
 
+    private int mBottom;
+    private int mLeft;
+
     private final FloatBuffer mVertexBuffer;
 
     private boolean mIsScrollable = false;
@@ -42,12 +48,12 @@ public class Container extends Shape {
     private float mLastMotionY;
     private float mLastMotionX;
 
-    public Container(Context context, float width, float height) {
-        this(context, width, height, 0.0f, 0.0f);
+    public Container(@NotNull Context context, @Nullable Container parent, float width, float height, float parentOffsetX, float parentOffsetY) {
+        this(context, parent, width, height, 0.0f, 0.0f, parentOffsetX, parentOffsetY);
     }
 
-    public Container(Context context, float width, float height, float startingPosX, float startingPosY) {
-        super(context);
+    public Container(@NotNull Context context, @Nullable Container parent, float width, float height, float startingPosX, float startingPosY, float parentOffsetX, float parentOffsetY) {
+        super(context, parent);
 
         mChildren = new ArrayList<Shape>();
         mChildContainers = new ArrayList<Container>();
@@ -55,6 +61,8 @@ public class Container extends Shape {
         ByteBuffer bb = ByteBuffer.allocateDirect(3 * 4 * 4); // 3 coords/vertex * 4 vertices * 4 bytes/float
         bb.order(ByteOrder.nativeOrder());
         mVertexBuffer = bb.asFloatBuffer();
+
+        setParentOffset(parentOffsetX, parentOffsetY);
 
         setScreenSize(width, height);
 
@@ -88,9 +96,14 @@ public class Container extends Shape {
         if (mBoundsHeight < mScreenHeight) {
             mBoundsHeight = mScreenHeight;
         }
+
+        if (getParent() != null) {
+            mBottom = (int)((getParent().getScreenHeight() / 2.0f) + mParentOffsetY - (getScreenHeight() / 2.0f));
+            mLeft = (int)((getParent().getScreenWidth() / 2.0f) + mParentOffsetX - (getScreenWidth() / 2.0f));
+        }
     }
 
-    public void setParentOffset(float x, float y) {
+    private void setParentOffset(float x, float y) {
         mParentOffsetX = x;
         mParentOffsetY = y;
     }
@@ -124,23 +137,22 @@ public class Container extends Shape {
         Matrix.translateM(scratch, 0, viewMatrix, 0, this.getX() + mParentOffsetX, this.getY() + mParentOffsetY, 0);
 
         for (Container c : mChildContainers) {
+            GLES20.glScissor((854 / 2) - 270 - 100, (480 / 2) + 100 - 100, 200, 200);
             c.draw(projMatrix, scratch);
         }
 
         Matrix.multiplyMM(vpMatrix, 0, projMatrix, 0, scratch, 0);
 
+        GLES20.glEnable(GLES20.GL_SCISSOR_TEST);
+        GLES20.glScissor(getAbsoluteBLCornerX(), getAbsoluteBLCornerY(), (int)mScreenWidth, (int)mScreenHeight);
         for (Shape shape : mChildren) {
             shape.draw(vpMatrix);
         }
-
+        GLES20.glDisable(GLES20.GL_SCISSOR_TEST);
     }
 
     @Override
     public void draw(float[] VPMatrix) {
-        /* for (Shape shape : mChildren) {
-            shape.draw(VPMatrix);
-        } */
-
         if (VersionControl.IS_RELEASE) { // Only draw bounding box in Debug mode
             return;
         }
@@ -389,5 +401,27 @@ public class Container extends Shape {
         }
 
         return true;
+    }
+
+    public int getAbsoluteBLCornerX() {
+        if (getParent() == null) {
+            return 0;
+        }
+        return getParent().getAbsoluteBLCornerX() + mLeft;
+    }
+
+    public int getAbsoluteBLCornerY() {
+        if (getParent() == null) {
+            return 0;
+        }
+        return getParent().getAbsoluteBLCornerY() + mBottom;
+    }
+
+    public float getScreenHeight() {
+        return mScreenHeight;
+    }
+
+    public float getScreenWidth() {
+        return mScreenWidth;
     }
 }
