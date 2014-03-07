@@ -2,7 +2,7 @@ package com.nickstephen.gamelib.opengl.layout;
 
 import android.content.Context;
 import android.opengl.GLES20;
-import android.opengl.GLSurfaceView;
+import android.opengl.Matrix;
 import android.view.MotionEvent;
 
 import com.nickstephen.gamelib.opengl.Shape;
@@ -20,19 +20,27 @@ import java.util.List;
  * Created by Nick Stephen on 6/03/14.
  */
 public class Container extends Shape {
-    public static final float SIZE_UNLIMITED = -1.0f;
+    private static final int INVALID_POINTER = -1;
 
     protected final List<Shape> mChildren;
+    protected final List<Container> mChildContainers;
 
-    private float mPosX;
-    private float mPosY;
+    private float mScreenWidth;
+    private float mScreenHeight;
+    private float mBoundsWidth;
+    private float mBoundsHeight;
+    private boolean mInifiniteBounds = true;
 
-    private float mWidth;
-    private float mHeight;
+    private float mParentOffsetX;
+    private float mParentOffsetY;
 
     private final FloatBuffer mVertexBuffer;
 
-    private boolean mIsScrollable = true;
+    private boolean mIsScrollable = false;
+    private boolean mIsBeingDragged = false;
+    private int mActivePointerId = INVALID_POINTER;
+    private float mLastMotionY;
+    private float mLastMotionX;
 
     public Container(Context context, float width, float height) {
         this(context, width, height, 0.0f, 0.0f);
@@ -42,22 +50,22 @@ public class Container extends Shape {
         super(context);
 
         mChildren = new ArrayList<Shape>();
+        mChildContainers = new ArrayList<Container>();
 
         ByteBuffer bb = ByteBuffer.allocateDirect(3 * 4 * 4); // 3 coords/vertex * 4 vertices * 4 bytes/float
         bb.order(ByteOrder.nativeOrder());
         mVertexBuffer = bb.asFloatBuffer();
 
-        setSize(width, height);
+        setScreenSize(width, height);
 
-        mPosX = startingPosX;
-        mPosY = startingPosY;
+        moveTo(startingPosX, startingPosY);
 
         mColour = new float[]{ 1.0f, 0, 0, 1.0f};
     }
 
-    public void setSize(float width, float height) {
-        mWidth = width;
-        mHeight = height;
+    public void setScreenSize(float width, float height) {
+        mScreenWidth = width;
+        mScreenHeight = height;
 
         float[] buff = new float[3 * 4];
         Arrays.fill(buff, 0);
@@ -73,6 +81,28 @@ public class Container extends Shape {
 
         mVertexBuffer.put(buff);
         mVertexBuffer.position(0);
+
+        if (mBoundsWidth < mScreenWidth) {
+            mBoundsWidth = mScreenWidth;
+        }
+        if (mBoundsHeight < mScreenHeight) {
+            mBoundsHeight = mScreenHeight;
+        }
+    }
+
+    public void setParentOffset(float x, float y) {
+        mParentOffsetX = x;
+        mParentOffsetY = y;
+    }
+
+    public void setBoundsSize(float width, float height) {
+        mInifiniteBounds = false;
+        mBoundsWidth = width;
+        mBoundsHeight = height;
+    }
+
+    public void setUnlimitedBounds(boolean val) {
+        mInifiniteBounds = val;
     }
 
     public boolean isScrollable() {
@@ -83,13 +113,35 @@ public class Container extends Shape {
         mIsScrollable = val;
     }
 
-    @Override
-    public void draw(float[] VPMatrix) {
-        for (Shape shape : mChildren) {
-            shape.draw(VPMatrix);
+    public void draw(float[] projMatrix, float[] viewMatrix) {
+        float[] scratch = new float[16];
+        //Matrix.translateM(scratch, 0, viewMatrix, 0, this.getX() + mParentOffsetX, this.getY() + mParentOffsetY, 0);
+        Matrix.translateM(scratch, 0, viewMatrix, 0, mParentOffsetX, mParentOffsetY, 0);
+        float[] vpMatrix = new float[16];
+        Matrix.multiplyMM(vpMatrix, 0, projMatrix, 0, scratch, 0);
+        draw(vpMatrix);
+
+        Matrix.translateM(scratch, 0, viewMatrix, 0, this.getX() + mParentOffsetX, this.getY() + mParentOffsetY, 0);
+
+        for (Container c : mChildContainers) {
+            c.draw(projMatrix, scratch);
         }
 
-        if (VersionControl.IS_RELEASE) {
+        Matrix.multiplyMM(vpMatrix, 0, projMatrix, 0, scratch, 0);
+
+        for (Shape shape : mChildren) {
+            shape.draw(vpMatrix);
+        }
+
+    }
+
+    @Override
+    public void draw(float[] VPMatrix) {
+        /* for (Shape shape : mChildren) {
+            shape.draw(VPMatrix);
+        } */
+
+        if (VersionControl.IS_RELEASE) { // Only draw bounding box in Debug mode
             return;
         }
 
@@ -125,25 +177,217 @@ public class Container extends Shape {
         GLES20.glDisableVertexAttribArray(mPositionHandle);
     }
 
+    @Override
+    public boolean onTouchEvent(MotionEvent e, float relX, float relY) {
+        if (!withinBounds(relX, relY)) {
+            mIsBeingDragged = false;
+            return false;
+        }
+
+        relX -= mParentOffsetX;
+        relY -= mParentOffsetY;
+
+        if (!onInterceptTouchEvent(e, relX - this.getX(), relY - this.getY())) {
+            for (Shape shape : mChildren) {
+                if (shape.onTouchEvent(e, relX - this.getX(), relY - this.getY())) {
+                    return true;
+                }
+            }
+            for (Container c : mChildContainers) {
+                if (c.onTouchEvent(e, relX - this.getX(), relY - this.getY())) {
+                    return true;
+                }
+            }
+        }
+
+        if (mIsScrollable) {
+            switch (e.getAction()) {
+                case MotionEvent.ACTION_MOVE:
+                    move(relX - mLastMotionX, relY - mLastMotionY);
+                case MotionEvent.ACTION_DOWN:
+                    mLastMotionX = relX;
+                    mLastMotionY = relY;
+                    break;
+            }
+            return true;
+        }
+
+        return false;
+    }
 
     public boolean onTouchEvent(MotionEvent e) {
         if (this.getParent() != null) {
             throw new RuntimeException("This method should only be called from the root container");
         }
 
-        float relX = e.getRawX() - (mWidth / 2.0f);
-        float relY = -(e.getRawY() - (mHeight / 2.0f));
+        float relX = e.getRawX() - (mScreenWidth / 2.0f);
+        float relY = -(e.getRawY() - (mScreenHeight / 2.0f));
 
-        for (Shape shape : mChildren) {
-            if (shape.onTouchEvent(e, relX, relY)) {
-                return true;
+        return onTouchEvent(e, relX, relY);
+
+        /* if (!onInterceptTouchEvent(e, relX - this.getX(), relY - this.getY())) {
+            for (Shape shape : mChildren) {
+                if (shape.onTouchEvent(e, relX - this.getX(), relY - this.getY())) {
+                    return true;
+                }
+            }
+            for (Shape c : mChildContainers) {
+                if (c.onTouchEvent(e, relX - this.getX(), relY - this.getY())) {
+                    return true;
+                }
             }
         }
 
         if (mIsScrollable) {
-            //TODO: Implement
+            switch (e.getAction()) {
+                case MotionEvent.ACTION_MOVE:
+                    move(relX - mLastMotionX, relY - mLastMotionY);
+                case MotionEvent.ACTION_DOWN:
+                    mLastMotionX = relX;
+                    mLastMotionY = relY;
+                    break;
+            }
+            return true;
         }
 
+        return false; */
+    }
+
+    public boolean onInterceptTouchEvent(MotionEvent e, float relX, float relY) {
+        /*
+         * This method JUST determines whether we want to intercept the motion.
+         * If we return true, onMotionEvent will be called and we do the actual
+         * scrolling there.
+         */
+
+        /*
+        * Shortcut the most recurring case: the user is in the dragging
+        * state and he is moving his finger.  We want to intercept this
+        * motion.
+        */
+        final int action = e.getAction();
+        if ((action == MotionEvent.ACTION_MOVE) && (mIsBeingDragged)) {
+            return true;
+        }
+
+        /*
+         * Don't try to intercept touch if we can't scroll anyway.
+         */
+        if (!mIsScrollable) {
+            return false;
+        }
+
+        switch (action & MotionEvent.ACTION_MASK) {
+            case MotionEvent.ACTION_MOVE: {
+                float yDiff = Math.abs(relY - mLastMotionY);
+                if (yDiff > mTouchSlop) {
+                    mIsBeingDragged = true;
+                }
+                break;
+            }
+
+            case MotionEvent.ACTION_DOWN: {
+                if (!inChild(relX, relY)) {
+                    mIsBeingDragged = false;
+                    break;
+                }
+
+                /*
+                 * Remember location of down touch.
+                 * ACTION_DOWN always refers to pointer index 0.
+                 */
+                mActivePointerId = e.getPointerId(0);
+                break;
+            }
+
+            case MotionEvent.ACTION_CANCEL:
+            case MotionEvent.ACTION_UP:
+                /* Release the drag */
+                mIsBeingDragged = false;
+                mActivePointerId = INVALID_POINTER;
+                break;
+            case MotionEvent.ACTION_POINTER_UP:
+                onSecondaryPointerUp(e);
+                break;
+        }
+
+        /*
+        * The only time we want to intercept motion events is if we are in the
+        * drag mode.
+        */
+        return mIsBeingDragged;
+    }
+
+    private void onSecondaryPointerUp(MotionEvent ev) {
+        final int pointerIndex = (ev.getAction() & MotionEvent.ACTION_POINTER_INDEX_MASK) >>
+                MotionEvent.ACTION_POINTER_INDEX_SHIFT;
+        final int pointerId = ev.getPointerId(pointerIndex);
+        if (pointerId == mActivePointerId) {
+            // This was our active pointer going up. Choose a new
+            // active pointer and adjust accordingly.
+            final int newPointerIndex = pointerIndex == 0 ? 1 : 0;
+            mLastMotionY = (int) ev.getY(newPointerIndex);
+            mActivePointerId = ev.getPointerId(newPointerIndex);
+            /* if (mVelocityTracker != null) {
+                mVelocityTracker.clear();
+            } */
+        }
+    }
+
+    private boolean inChild(float x, float y) {
+        for (Shape shape : mChildren) {
+            if (shape.withinBounds(x, y)) {
+                return true;
+            }
+        }
+        for (Container c : mChildContainers) {
+            if (c.withinBounds(x, y)) {
+                return true;
+            }
+        }
         return false;
+    }
+
+    @Override
+    public void move(float dx, float dy) {
+        super.move(dx, dy);
+
+        if (mInifiniteBounds) {
+            return;
+        }
+
+        // If there are non-infinite bounds, make sure that the user can't drag outside those bounds
+
+        float posX = this.getX();
+        float posY = this.getY();
+        float newX = posX;
+        float newY = posY;
+
+        if ((posX + (mScreenWidth / 2.0f)) - (mBoundsWidth / 2.0f) > 0.0f) {
+            newX = (mBoundsWidth - mScreenWidth) / 2.0f;
+        } else if ((posX - (mScreenWidth / 2.0f)) + (mBoundsWidth / 2.0f) < 0.0f) {
+            newX = (mScreenWidth - mBoundsWidth) / 2.0f;
+        }
+
+        if ((posY + (mScreenHeight / 2.0f)) - (mBoundsHeight / 2.0f) > 0.0f) {
+            newY = (mBoundsHeight - mScreenHeight) / 2.0f;
+        } else if ((posY - (mScreenHeight / 2.0f)) + (mBoundsHeight / 2.0f) < 0.0f) {
+            newY = (mScreenHeight - mBoundsHeight) / 2.0f;
+        }
+
+        this.moveTo(newX, newY);
+    }
+
+    @Override
+    public boolean withinBounds(float posX, float posY, float touchSlop) {
+        if ((Math.abs(-posY + mParentOffsetY) - (mScreenHeight / 2.0f)) > touchSlop) {
+            return false;
+        }
+
+        if ((Math.abs(-posX + mParentOffsetX) - (mScreenWidth / 2.0f)) > touchSlop) {
+            return false;
+        }
+
+        return true;
     }
 }

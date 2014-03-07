@@ -40,7 +40,7 @@ public abstract class Shape implements ITouchL {
     private CheckForTap mPendingCheckForTap;
     private UnsetPressedState mUnsetPressedState;
     private PerformClick mPerformClick;
-    private int mTouchSlop;
+    protected final int mTouchSlop;
     private GLSurfaceView mSurface;
 
     // Positions
