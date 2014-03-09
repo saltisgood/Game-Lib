@@ -132,6 +132,10 @@ public abstract class Shape implements ITouchL {
         mColour = colour;
     }
 
+    public float[] getColour() {
+        return mColour;
+    }
+
     public void setSize(float radius) {
         mLeft = mRight = mUp = mDown = radius;
     }

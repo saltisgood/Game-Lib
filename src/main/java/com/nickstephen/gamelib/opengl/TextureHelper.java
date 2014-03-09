@@ -23,6 +23,7 @@ public class TextureHelper {
         final int[] textureHandle = new int[1];
 
         GLES20.glGenTextures(1, textureHandle, 0);
+        Utilities.checkGlError("glGenTextures");
 
         if (textureHandle[0] != 0)
         {
