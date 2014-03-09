@@ -26,7 +26,7 @@ class TextUtil {
 
     private static TextUtil sInstance;
 
-    public static TextUtil getInstance() {
+    static TextUtil getInstance() {
         return sInstance;
     }
 
@@ -34,11 +34,11 @@ class TextUtil {
      * MUST BE CALLED ON GLThread.Pause()! Otherwise errors will occur on restart with cached programs
      * and whatnot!
      */
-    public static void destroyInstance() {
+    static void destroyInstance() {
         sInstance = null;
     }
 
-    public static TextUtil init(AssetManager assets, String file) {
+    static TextUtil init(AssetManager assets, String file) {
         if (sInstance == null) {
             sInstance = new TextUtil(assets, file);
         }

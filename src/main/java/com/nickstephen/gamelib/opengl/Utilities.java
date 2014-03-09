@@ -106,7 +106,7 @@ public class Utilities {
      * just after making it:
      *
      * <pre>
-     * mColorHandle = GLES20.glGetUniformLocation(mProgram, "vColor");
+     * mColorHandle = GLES20.glGetUniformLocation(mProgram, "u_Color");
      * MyGLRenderer.checkGlError("glGetUniformLocation");</pre>
      *
      * If the operation is not successful, the check throws an error.

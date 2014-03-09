@@ -13,6 +13,10 @@ import org.jetbrains.annotations.NotNull;
 public class Text extends Shape {
     private static final float[] defColour = { 1.0f, 1.0f, 1.0f, 1.0f };
 
+    public static final void destroyInstance() {
+        TextUtil.destroyInstance();
+    }
+
     private String mText;
     float mScaleX = 1.0f;
     float mScaleY = 1.0f;

@@ -43,6 +43,7 @@ public abstract class Shape implements ITouchL {
     private PerformClick mPerformClick;
     protected final int mTouchSlop;
     private GLSurfaceView mSurface;
+    private int mTextureId;
 
     // Positions
     /**
@@ -368,8 +369,20 @@ public abstract class Shape implements ITouchL {
         return true;
     }
 
+    public int getTextureId() {
+        return mTextureId;
+    }
+
+    protected final void setTextureId(int texId) {
+        mTextureId = texId;
+    }
+
     public @Nullable GLSurfaceView getSurface() {
         return mSurface;
+    }
+
+    public @NotNull Program getProgram() {
+        return mProgram;
     }
 
     public abstract void draw(float[] VPMatrix);

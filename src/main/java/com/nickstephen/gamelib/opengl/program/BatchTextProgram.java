@@ -9,7 +9,7 @@ import com.nickstephen.gamelib.opengl.program.Program;
 public class BatchTextProgram extends Program {
 
     private static final AttribVariable[] programVariables = {
-            AttribVariable.A_Position, AttribVariable.A_TexCoordinate, AttribVariable.A_MVPMatrixIndex
+            AttribVariable.A_Position, AttribVariable.A_TexCoordinate, AttribVariable.A_MVPMatrixIndex,
     };
 
     private static final String vertexShaderCode =

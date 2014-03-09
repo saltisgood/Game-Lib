@@ -159,7 +159,7 @@ public class Container extends Shape {
 
         GLES20.glUseProgram(mProgram.getHandle()); // Add program to OpenGL environment
         // Get handle to vertex shader's vPosition member
-        int mPositionHandle = GLES20.glGetAttribLocation(mProgram.getHandle(), "vPosition");
+        int mPositionHandle = GLES20.glGetAttribLocation(mProgram.getHandle(), "a_Position");
         // Enable a handle to the circle vertices
         GLES20.glEnableVertexAttribArray(mPositionHandle);
         // Prepare the circle coordinate data
@@ -167,13 +167,13 @@ public class Container extends Shape {
                 GLES20.GL_FLOAT, false, 3 * 4, mVertexBuffer);
 
         // Get handle to fragment shader's vColor member
-        int mColorHandle = GLES20.glGetUniformLocation(mProgram.getHandle(), "vColor");
+        int mColorHandle = GLES20.glGetUniformLocation(mProgram.getHandle(), "u_Color");
 
         // Set color for drawing circle
         GLES20.glUniform4fv(mColorHandle, 1, mColour, 0);
 
         // Get handle to shape's transformation matrix
-        int mMVPMatrixHandle = GLES20.glGetUniformLocation(mProgram.getHandle(), "uMVPMatrix");
+        int mMVPMatrixHandle = GLES20.glGetUniformLocation(mProgram.getHandle(), "u_MVPMatrix");
         Utilities.checkGlError("glGetUniformLocation");
 
         // Apply the projection and view transformation
