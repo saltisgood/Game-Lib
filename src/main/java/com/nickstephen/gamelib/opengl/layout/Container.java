@@ -227,44 +227,6 @@ public class Container extends Shape {
         return false;
     }
 
-    public boolean onTouchEvent(MotionEvent e) {
-        if (this.getParent() != null) {
-            throw new RuntimeException("This method should only be called from the root container");
-        }
-
-        float relX = e.getRawX() - (mScreenWidth / 2.0f);
-        float relY = -(e.getRawY() - (mScreenHeight / 2.0f));
-
-        return onTouchEvent(e, relX, relY);
-
-        /* if (!onInterceptTouchEvent(e, relX - this.getX(), relY - this.getY())) {
-            for (Shape shape : mChildren) {
-                if (shape.onTouchEvent(e, relX - this.getX(), relY - this.getY())) {
-                    return true;
-                }
-            }
-            for (Shape c : mChildContainers) {
-                if (c.onTouchEvent(e, relX - this.getX(), relY - this.getY())) {
-                    return true;
-                }
-            }
-        }
-
-        if (mIsScrollable) {
-            switch (e.getAction()) {
-                case MotionEvent.ACTION_MOVE:
-                    move(relX - mLastMotionX, relY - mLastMotionY);
-                case MotionEvent.ACTION_DOWN:
-                    mLastMotionX = relX;
-                    mLastMotionY = relY;
-                    break;
-            }
-            return true;
-        }
-
-        return false; */
-    }
-
     public boolean onInterceptTouchEvent(MotionEvent e, float relX, float relY) {
         /*
          * This method JUST determines whether we want to intercept the motion.
