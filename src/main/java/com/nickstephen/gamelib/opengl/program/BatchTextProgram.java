@@ -1,9 +1,5 @@
 package com.nickstephen.gamelib.opengl.program;
 
-import com.nickstephen.gamelib.opengl.AttribVariable;
-import com.nickstephen.gamelib.opengl.UniformVariable;
-import com.nickstephen.gamelib.opengl.program.Program;
-
 /**
  * Created by Nick Stephen on 6/03/14.
  */

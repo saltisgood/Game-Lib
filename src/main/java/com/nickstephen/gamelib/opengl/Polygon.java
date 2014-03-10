@@ -4,16 +4,9 @@ import android.content.Context;
 import android.opengl.GLES20;
 
 import com.nickstephen.gamelib.opengl.layout.Container;
-import com.nickstephen.gamelib.opengl.text.*;
-import com.nickstephen.gamelib.opengl.text.Vertices;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.FloatBuffer;
-import java.nio.ShortBuffer;
 
 /**
  * Created by Nick Stephen on 6/03/14.
@@ -110,10 +103,10 @@ public class Polygon extends Shape {
     /**
      * Encapsulates the OpenGL ES instructions for drawing this shape.
      *
-     * @param mvpMatrix - The Model View Project matrix in which to draw
+     * @param vpMatrix - The Model View Project matrix in which to draw
      * this shape.
      */
-    public void draw(float[] mvpMatrix) {
-        mVertices.draw(mvpMatrix);
+    public void draw(float[] vpMatrix) {
+        mVertices.draw(vpMatrix);
     }
 }

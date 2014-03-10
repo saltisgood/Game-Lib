@@ -3,6 +3,8 @@ package com.nickstephen.gamelib.opengl;
 import android.opengl.GLES20;
 import android.util.Log;
 
+import com.nickstephen.gamelib.opengl.program.AttribVariable;
+
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.ByteBuffer;

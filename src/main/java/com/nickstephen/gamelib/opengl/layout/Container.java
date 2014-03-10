@@ -152,7 +152,7 @@ public class Container extends Shape {
     }
 
     @Override
-    public void draw(float[] mvpMatrix) {
+    public void draw(float[] vpMatrix) {
         if (VersionControl.IS_RELEASE) { // Only draw bounding box in Debug mode
             return;
         }
@@ -177,7 +177,7 @@ public class Container extends Shape {
         Utilities.checkGlError("glGetUniformLocation");
 
         // Apply the projection and view transformation
-        GLES20.glUniformMatrix4fv(mMVPMatrixHandle, 1, false, mvpMatrix, 0);
+        GLES20.glUniformMatrix4fv(mMVPMatrixHandle, 1, false, vpMatrix, 0);
         Utilities.checkGlError("glUniformMatrix4fv");
 
         // Draw the box

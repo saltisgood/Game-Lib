@@ -1,19 +1,15 @@
 package com.nickstephen.gamelib.opengl;
 
 import android.content.Context;
-import android.graphics.RectF;
 import android.opengl.GLSurfaceView;
-import android.os.Handler;
-import android.os.Looper;
+import android.opengl.Matrix;
 import android.view.MotionEvent;
-import android.view.View;
 import android.view.ViewConfiguration;
 
 import com.nickstephen.gamelib.GeneralUtil;
 import com.nickstephen.gamelib.opengl.layout.Container;
 import com.nickstephen.gamelib.opengl.program.GenericProgram;
 import com.nickstephen.gamelib.opengl.program.Program;
-import com.nickstephen.gamelib.opengl.text.*;
 import com.nickstephen.gamelib.opengl.widget.IOnClickL;
 import com.nickstephen.gamelib.opengl.widget.ITouchL;
 
@@ -45,7 +41,7 @@ public abstract class Shape implements ITouchL {
     protected final int mTouchSlop;
     private GLSurfaceView mSurface;
     private int mTextureId;
-    protected com.nickstephen.gamelib.opengl.text.Vertices mVertices;
+    protected Vertices mVertices;
 
     // Positions
     /**
@@ -387,8 +383,11 @@ public abstract class Shape implements ITouchL {
         return mProgram;
     }
 
-    public void draw(float[] mvpMatrix) {
+    public void draw(float[] vpMatrix) {
         if (mVertices != null) {
+            float[] mvpMatrix = new float[16];
+            Matrix.translateM(mvpMatrix, 0, mBaseX, mBaseY, 0);
+            Matrix.multiplyMM(mvpMatrix, 0, vpMatrix, 0, mvpMatrix, 0);
             mVertices.draw(mvpMatrix);
         }
     }

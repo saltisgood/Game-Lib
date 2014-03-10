@@ -1,4 +1,4 @@
-package com.nickstephen.gamelib.opengl;
+package com.nickstephen.gamelib.opengl.program;
 
 /**
  * Created by Nick Stephen on 10/03/14.

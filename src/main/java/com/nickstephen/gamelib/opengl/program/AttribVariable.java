@@ -1,4 +1,4 @@
-package com.nickstephen.gamelib.opengl;
+package com.nickstephen.gamelib.opengl.program;
 
 /**
  * As I understand it, this is used with GLES20.glBindAttribLocation(mProgram, attribVar.getHandle(), attribVar.getName())

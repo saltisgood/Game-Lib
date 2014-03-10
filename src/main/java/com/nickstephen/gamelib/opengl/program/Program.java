@@ -2,8 +2,6 @@ package com.nickstephen.gamelib.opengl.program;
 
 import android.opengl.GLES20;
 
-import com.nickstephen.gamelib.opengl.AttribVariable;
-import com.nickstephen.gamelib.opengl.UniformVariable;
 import com.nickstephen.gamelib.opengl.Utilities;
 
 /**

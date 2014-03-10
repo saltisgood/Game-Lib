@@ -3,6 +3,7 @@ package com.nickstephen.gamelib.opengl.text;
 import android.content.Context;
 
 import com.nickstephen.gamelib.opengl.Shape;
+import com.nickstephen.gamelib.opengl.SpriteHelper;
 import com.nickstephen.gamelib.opengl.layout.Container;
 import com.nickstephen.gamelib.opengl.program.BatchTextProgram;
 
@@ -18,7 +19,7 @@ public class Text extends Shape {
         TextUtil.destroyInstance();
     }
 
-    private String mText;
+    protected String mText;
     float mScaleX = 1.0f;
     float mScaleY = 1.0f;
     float mSpaceX;
@@ -86,5 +87,24 @@ public class Text extends Shape {
         ((SpriteHelper) mVertices).reset();
         TextUtil.getInstance().addTextToBatch((SpriteHelper) mVertices);
         ((SpriteHelper) mVertices).finishAddingSprites();
+    }
+
+    @Override
+    public void moveTo(float newX, float newY) {
+        super.moveTo(newX, newY);
+
+        reloadVertices();
+    }
+
+    @Override
+    public void move(float dx, float dy) {
+        super.move(dx, dy);
+
+        reloadVertices();
+    }
+
+    @Override
+    public void draw(float[] vpMatrix) {
+        mVertices.draw(vpMatrix);
     }
 }
