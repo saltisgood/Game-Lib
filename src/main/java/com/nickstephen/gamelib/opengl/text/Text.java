@@ -85,7 +85,7 @@ public class Text extends Shape {
 
     private void reloadVertices() {
         ((SpriteHelper) mVertices).reset();
-        TextUtil.getInstance().addTextToBatch((SpriteHelper) mVertices);
+        TextUtil.getInstance().load(this).addTextToBatch((SpriteHelper) mVertices);
         ((SpriteHelper) mVertices).finishAddingSprites();
     }
 

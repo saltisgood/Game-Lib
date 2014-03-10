@@ -5,6 +5,7 @@ import android.opengl.GLES20;
 import android.opengl.Matrix;
 import android.view.MotionEvent;
 
+import com.nickstephen.gamelib.opengl.Quadrilateral;
 import com.nickstephen.gamelib.opengl.Shape;
 import com.nickstephen.gamelib.opengl.Utilities;
 import com.nickstephen.lib.VersionControl;
@@ -22,7 +23,7 @@ import java.util.List;
 /**
  * Created by Nick Stephen on 6/03/14.
  */
-public class Container extends Shape {
+public class Container extends Quadrilateral {
     private static final int INVALID_POINTER = -1;
 
     protected final List<Shape> mChildren;
@@ -32,7 +33,7 @@ public class Container extends Shape {
     private float mScreenHeight;
     private float mBoundsWidth;
     private float mBoundsHeight;
-    private boolean mInifiniteBounds = true;
+    private boolean mInfiniteBounds = true;
 
     private float mParentOffsetX;
     private float mParentOffsetY;
@@ -47,13 +48,14 @@ public class Container extends Shape {
     private int mActivePointerId = INVALID_POINTER;
     private float mLastMotionY;
     private float mLastMotionX;
+    protected float[] mVPMatrix;
 
     public Container(@NotNull Context context, @Nullable Container parent, float width, float height, float parentOffsetX, float parentOffsetY) {
         this(context, parent, width, height, 0.0f, 0.0f, parentOffsetX, parentOffsetY);
     }
 
     public Container(@NotNull Context context, @Nullable Container parent, float width, float height, float startingPosX, float startingPosY, float parentOffsetX, float parentOffsetY) {
-        super(context, parent);
+        super(context, parent, startingPosX, startingPosY, width, height);
 
         mChildren = new ArrayList<Shape>();
         mChildContainers = new ArrayList<Container>();
@@ -109,13 +111,13 @@ public class Container extends Shape {
     }
 
     public void setBoundsSize(float width, float height) {
-        mInifiniteBounds = false;
+        mInfiniteBounds = false;
         mBoundsWidth = width;
         mBoundsHeight = height;
     }
 
     public void setUnlimitedBounds(boolean val) {
-        mInifiniteBounds = val;
+        mInfiniteBounds = val;
     }
 
     public boolean isScrollable() {
@@ -128,65 +130,31 @@ public class Container extends Shape {
 
     public void draw(float[] projMatrix, float[] viewMatrix) {
         float[] scratch = new float[16];
-        //Matrix.translateM(scratch, 0, viewMatrix, 0, this.getX() + mParentOffsetX, this.getY() + mParentOffsetY, 0);
         Matrix.translateM(scratch, 0, viewMatrix, 0, mParentOffsetX, mParentOffsetY, 0);
-        float[] vpMatrix = new float[16];
-        Matrix.multiplyMM(vpMatrix, 0, projMatrix, 0, scratch, 0);
-        draw(vpMatrix);
+
+        mVPMatrix = scratch;
+        draw(projMatrix);
+        mVPMatrix = new float[16];
 
         Matrix.translateM(scratch, 0, viewMatrix, 0, this.getX() + mParentOffsetX, this.getY() + mParentOffsetY, 0);
 
         for (Container c : mChildContainers) {
-            GLES20.glScissor((854 / 2) - 270 - 100, (480 / 2) + 100 - 100, 200, 200);
             c.draw(projMatrix, scratch);
         }
 
-        Matrix.multiplyMM(vpMatrix, 0, projMatrix, 0, scratch, 0);
+        Matrix.multiplyMM(mVPMatrix, 0, projMatrix, 0, scratch, 0);
 
         GLES20.glEnable(GLES20.GL_SCISSOR_TEST);
         GLES20.glScissor(getAbsoluteBLCornerX(), getAbsoluteBLCornerY(), (int)mScreenWidth, (int)mScreenHeight);
         for (Shape shape : mChildren) {
-            shape.draw(vpMatrix);
+            shape.draw(mVPMatrix);
         }
         GLES20.glDisable(GLES20.GL_SCISSOR_TEST);
     }
 
     @Override
-    public void draw(float[] vpMatrix) {
-        if (VersionControl.IS_RELEASE) { // Only draw bounding box in Debug mode
-            return;
-        }
-
-        GLES20.glUseProgram(mProgram.getHandle()); // Add program to OpenGL environment
-        // Get handle to vertex shader's vPosition member
-        int mPositionHandle = GLES20.glGetAttribLocation(mProgram.getHandle(), "a_Position");
-        // Enable a handle to the circle vertices
-        GLES20.glEnableVertexAttribArray(mPositionHandle);
-        // Prepare the circle coordinate data
-        GLES20.glVertexAttribPointer(mPositionHandle, 3,
-                GLES20.GL_FLOAT, false, 3 * 4, mVertexBuffer);
-
-        // Get handle to fragment shader's vColor member
-        int mColorHandle = GLES20.glGetUniformLocation(mProgram.getHandle(), "u_Color");
-
-        // Set color for drawing circle
-        GLES20.glUniform4fv(mColorHandle, 1, mColour, 0);
-
-        // Get handle to shape's transformation matrix
-        int mMVPMatrixHandle = GLES20.glGetUniformLocation(mProgram.getHandle(), "u_MVPMatrix");
-        Utilities.checkGlError("glGetUniformLocation");
-
-        // Apply the projection and view transformation
-        GLES20.glUniformMatrix4fv(mMVPMatrixHandle, 1, false, vpMatrix, 0);
-        Utilities.checkGlError("glUniformMatrix4fv");
-
-        // Draw the box
-        GLES20.glLineWidth(5.0f);
-        GLES20.glDrawArrays(GLES20.GL_LINE_LOOP, 0, 4);
-        GLES20.glLineWidth(1.0f);
-
-        // Disable vertex array
-        GLES20.glDisableVertexAttribArray(mPositionHandle);
+    public float[] getModelMatrix() {
+        return mVPMatrix;
     }
 
     @Override
@@ -326,7 +294,7 @@ public class Container extends Shape {
     public void move(float dx, float dy) {
         super.move(dx, dy);
 
-        if (mInifiniteBounds) {
+        if (mInfiniteBounds) {
             return;
         }
 

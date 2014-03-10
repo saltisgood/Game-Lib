@@ -385,11 +385,16 @@ public abstract class Shape implements ITouchL {
 
     public void draw(float[] vpMatrix) {
         if (mVertices != null) {
-            float[] mvpMatrix = new float[16];
-            Matrix.translateM(mvpMatrix, 0, mBaseX, mBaseY, 0);
+            float[] mvpMatrix = getModelMatrix();
             Matrix.multiplyMM(mvpMatrix, 0, vpMatrix, 0, mvpMatrix, 0);
             mVertices.draw(mvpMatrix);
         }
+    }
+
+    public float[] getModelMatrix() {
+        float[] mvpMatrix = new float[16];
+        Matrix.translateM(mvpMatrix, 0, mBaseX, mBaseY, 0);
+        return mvpMatrix;
     }
 
     private final class CheckForTap implements Runnable {

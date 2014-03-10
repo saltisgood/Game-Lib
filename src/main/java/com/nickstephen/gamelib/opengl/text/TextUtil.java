@@ -202,8 +202,9 @@ class TextUtil {
         }
     }
 
-    public void load(Text text) {
+    public TextUtil load(Text text) {
         mTextObj = text;
+        return this;
     }
 
     public void addTextToBatch(SpriteHelper spriteHelper) {
