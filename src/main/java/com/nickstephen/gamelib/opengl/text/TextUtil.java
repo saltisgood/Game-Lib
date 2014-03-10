@@ -228,6 +228,32 @@ class TextUtil {
         }
     }
 
+    public void addTextToBatch(SpriteHelper spriteHelper) {
+        float chrHeight = mCellHeight * mTextObj.mScaleY;          // Calculate Scaled Character Height
+        float chrWidth = mCellWidth * mTextObj.mScaleX;            // Calculate Scaled Character Width
+        int len = mTextObj.getText().length();                        // Get String Length
+        float x = mTextObj.getX(), y = mTextObj.getY();
+        x += (chrWidth / 2.0f); // - ( mFontPaddingX * mScaleX);  // Adjust Start X
+        y += (chrHeight / 2.0f); // - ( mFontPaddingY * mScaleY);  // Adjust Start Y
+
+        // create a model matrix based on x, y and angleDeg
+        float[] modelMatrix = new float[16];
+        Matrix.setIdentityM(modelMatrix, 0);
+        Matrix.translateM(modelMatrix, 0, x, y, 0);
+
+        float letterX, letterY;
+        letterX = letterY = 0;
+
+        for (int i = 0; i < len; i++)  {              // FOR Each Character in String
+            int c = (int)mTextObj.getText().charAt(i) - GLText.CHAR_START;  // Calculate Character Index (Offset by First Char in Font)
+            if (c < 0 || c >= GLText.CHAR_CNT)                // IF Character Not In Font
+                c = GLText.CHAR_UNKNOWN;                         // Set to Unknown Character Index
+            //mBatch.drawSprite(letterX, letterY, chrWidth, chrHeight, mCharRegion[c], modelMatrix);  // Draw the Character
+            spriteHelper.addSpriteToBatch(letterX, letterY, chrWidth, chrHeight, mCharRegion[c], modelMatrix);
+            letterX += (mCharWidths[c] + mTextObj.mSpaceX) * mTextObj.mScaleX;    // Advance X Position by Scaled Character Width
+        }
+    }
+
     private float getLength(String text) {
         float len = 0.0f;                               // Working Length
         int strLen = text.length();                     // Get String Length (Characters)
@@ -237,5 +263,9 @@ class TextUtil {
         }
         len += (strLen > 1 ? ((strLen - 1) * mTextObj.mSpaceX) * mTextObj.mScaleX : 0);  // Add Space Length
         return len;                                     // Return Total Length
+    }
+
+    public int getTextureId() {
+        return mTextureId;
     }
 }

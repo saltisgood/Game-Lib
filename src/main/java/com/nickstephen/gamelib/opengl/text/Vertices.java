@@ -21,15 +21,15 @@ import java.util.Arrays;
 public class Vertices {
     //--Constants--//
     private final static int POSITION_CNT_2D = 2;              // Number of Components in Vertex Position for 2D
-    private final static int TEXCOORD_CNT = 2;                 // Number of Components in Vertex Texture Coords
-    private static final int MVP_MATRIX_INDEX_CNT = 1; // Number of Components in MVP matrix index
+    public final static int TEXCOORD_CNT = 2;                 // Number of Components in Vertex Texture Coords
+    public static final int MVP_MATRIX_INDEX_CNT = 1; // Number of Components in MVP matrix index
 
     private final static int INDEX_SIZE = Short.SIZE / 8;      // Index Byte Size (Short.SIZE = bits)
 
     /**
      * Number of position components (2=2D, 3=3D)
      */
-    private final int mPositionCount;
+    protected final int mPositionCount;
     private final int mVertexStride;
     /**
      * Bytesize of a single vertex (stride * bytes in float)
@@ -37,21 +37,22 @@ public class Vertices {
     private final int mVertexSize;
     private final FloatBuffer mVertices;
     private final ShortBuffer mIndices;
-    private final int mNumVertices;
+    protected final int mNumVertices;
     private final int mNumIndices;
     private final int mTextureCoordinateHandle;
     private final int mMVPIndexHandle;
     private final int mPositionHandle;
-    private final Program mProgram;
+    protected final Program mProgram;
     private final Shape mShape;
     private final int mPrimitiveType;
     private final boolean mUsesColour;
-    private final boolean mUsesTexture;
-    private final boolean mUsesTextureCoords;
-    private final boolean mUsesMVPIndex;
-    private float[] mVertexCoords;
-    private float[] mTexCoords;
-    private float[] mMVPIndices;
+    protected final boolean mUsesTexture;
+    protected final boolean mUsesTextureCoords;
+    protected final boolean mUsesMVPIndex;
+    protected float[] mVertexCoords;
+    protected float[] mTexCoords;
+    protected float[] mMVPIndices;
+    protected int mNumMVPMatrices = 1;
 
     public Vertices(@NotNull Shape shape, int numVertices, int numIndices, int glPrimitive) {
         mShape = shape;
@@ -111,7 +112,7 @@ public class Vertices {
      */
     public void setVertices(float[] vertices) {
         if (vertices.length != mPositionCount * mNumVertices) {
-            throw new IllegalArgumentException("Invalid vertex array size");
+            throw new IllegalArgumentException("Invalid vertex array size!");
         }
         mVertexCoords = vertices;
         resetFloatBuffer();
@@ -119,7 +120,9 @@ public class Vertices {
 
     public void setTextureCoords(float[] coords) {
         if (coords.length != TEXCOORD_CNT * mNumVertices) {
-            throw new IllegalArgumentException("Invalid tex-coord array size");
+            throw new IllegalArgumentException("Invalid tex-coord array size!");
+        } else if (!mUsesTextureCoords) {
+            throw new UnsupportedOperationException("Program doesn't use texture coords!");
         }
         mTexCoords = coords;
         resetFloatBuffer();
@@ -127,13 +130,15 @@ public class Vertices {
 
     public void setMVPIndices(float[] indices) {
         if (indices.length != MVP_MATRIX_INDEX_CNT * mNumVertices) {
-            throw new IllegalArgumentException("Invalid mvp-index array size");
+            throw new IllegalArgumentException("Invalid mvp-index array size!");
+        } else if (!mUsesMVPIndex) {
+            throw new UnsupportedOperationException("Program doesn't use MVP indices!");
         }
         mMVPIndices = indices;
         resetFloatBuffer();
     }
 
-    private void resetFloatBuffer() {
+    protected void resetFloatBuffer() {
         int len = mNumVertices * mVertexStride;
         float[] buff = new float[len];
 
@@ -162,7 +167,7 @@ public class Vertices {
         GLES20.glUseProgram(mProgram.getHandle());
 
         int mvpMatricesHandle = GLES20.glGetUniformLocation(mProgram.getHandle(), UniformVariable.U_MVPMatrix.getName());
-        GLES20.glUniformMatrix4fv(mvpMatricesHandle, 1, false, mvpMatrix, 0);
+        GLES20.glUniformMatrix4fv(mvpMatricesHandle, mNumMVPMatrices, false, mvpMatrix, 0);
         GLES20.glEnableVertexAttribArray(mvpMatricesHandle);
 
         // bind vertex position pointer

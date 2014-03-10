@@ -1,6 +1,7 @@
 package com.nickstephen.gamelib.opengl.program;
 
 import com.nickstephen.gamelib.opengl.AttribVariable;
+import com.nickstephen.gamelib.opengl.UniformVariable;
 import com.nickstephen.gamelib.opengl.program.Program;
 
 /**
@@ -11,6 +12,8 @@ public class BatchTextProgram extends Program {
     private static final AttribVariable[] programVariables = {
             AttribVariable.A_Position, AttribVariable.A_TexCoordinate, AttribVariable.A_MVPMatrixIndex,
     };
+
+    private static final UniformVariable[] uniVariables = { UniformVariable.U_MVPMatrix, UniformVariable.U_Texture, UniformVariable.U_Colour };
 
     private static final String vertexShaderCode =
             "uniform mat4 u_MVPMatrix[24];      \n"     // An array representing the combined
@@ -45,7 +48,7 @@ public class BatchTextProgram extends Program {
 
     @Override
     public void init() {
-        super.init(vertexShaderCode, fragmentShaderCode, programVariables);
+        super.init(vertexShaderCode, fragmentShaderCode, programVariables, uniVariables);
     }
 
 }
