@@ -55,8 +55,8 @@ public class Text extends Shape {
     }
 
     @Override
-    public void draw(float[] VPMatrix) {
-        mTextInstance.begin(VPMatrix);
+    public void draw(float[] mvpMatrix) {
+        mTextInstance.begin(mvpMatrix);
 
         if (mCentered) {
             mTextInstance.draw(mText, this.getX(), this.getY());

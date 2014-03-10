@@ -5,15 +5,15 @@ import android.opengl.GLES20;
 import com.nickstephen.gamelib.opengl.AttribVariable;
 import com.nickstephen.gamelib.opengl.Shape;
 import com.nickstephen.gamelib.opengl.UniformVariable;
-import com.nickstephen.gamelib.opengl.Utilities;
 import com.nickstephen.gamelib.opengl.program.Program;
 
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.nio.IntBuffer;
+import java.nio.FloatBuffer;
 import java.nio.ShortBuffer;
+import java.util.Arrays;
 
 /**
  * Created by Nick Stephen on 9/03/14.
@@ -35,35 +35,47 @@ public class Vertices {
      * Bytesize of a single vertex (stride * bytes in float)
      */
     private final int mVertexSize;
-    private final IntBuffer mVertices;
+    private final FloatBuffer mVertices;
     private final ShortBuffer mIndices;
-    private int mNumVertices;
-    private int mNumIndices;
-    private final int[] mTempBuffer;
+    private final int mNumVertices;
+    private final int mNumIndices;
     private final int mTextureCoordinateHandle;
     private final int mMVPIndexHandle;
     private final int mPositionHandle;
-    private float[] mPositions;
-    private float[] mTextureCoordinates;
-    private float[] mColours;
     private final Program mProgram;
     private final Shape mShape;
     private final int mPrimitiveType;
+    private final boolean mUsesColour;
+    private final boolean mUsesTexture;
+    private final boolean mUsesTextureCoords;
+    private final boolean mUsesMVPIndex;
+    private float[] mVertexCoords;
+    private float[] mTexCoords;
+    private float[] mMVPIndices;
 
     public Vertices(@NotNull Shape shape, int numVertices, int numIndices, int glPrimitive) {
         mShape = shape;
         mProgram = shape.getProgram();
         mPositionCount = POSITION_CNT_2D;  // Set Position Component Count
+
+        mNumVertices = numVertices;
+        mNumIndices = numIndices;
+
+        mUsesColour = mProgram.usesVariable(UniformVariable.U_Colour);
+        mUsesTexture = mProgram.usesVariable(UniformVariable.U_Texture);
+        mUsesTextureCoords = mProgram.usesVariable(AttribVariable.A_TexCoordinate);
+        mUsesMVPIndex = mProgram.usesVariable(AttribVariable.A_MVPMatrixIndex);
+
         mVertexStride = mPositionCount +
-                (mProgram.usesVariable(AttribVariable.A_MVPMatrixIndex) ? MVP_MATRIX_INDEX_CNT : 0) +
-                (mProgram.usesVariable(AttribVariable.A_TexCoordinate) ? TEXCOORD_CNT : 0);
+                (mUsesMVPIndex ? MVP_MATRIX_INDEX_CNT : 0) +
+                (mUsesTextureCoords ? TEXCOORD_CNT : 0);
                 // Calculate Vertex Stride
         mVertexSize = mVertexStride * 4;        // Calculate Vertex Byte Size
         mPrimitiveType = glPrimitive;
 
         ByteBuffer buffer = ByteBuffer.allocateDirect( numVertices * mVertexSize);  // Allocate Buffer for Vertices (Max)
         buffer.order( ByteOrder.nativeOrder() );        // Set Native Byte Order
-        mVertices = buffer.asIntBuffer();           // Save Vertex Buffer
+        mVertices = buffer.asFloatBuffer();           // Save Vertex Buffer
 
         if ( numIndices > 0 )  {                        // IF Indices Required
             buffer = ByteBuffer.allocateDirect( numIndices * INDEX_SIZE );  // Allocate Buffer for Indices (MAX)
@@ -73,7 +85,7 @@ public class Vertices {
         else                                            // ELSE Indices Not Required
             mIndices = null;                              // No Index Buffer
 
-        mTempBuffer = new int[numVertices * mVertexSize / 4];  // Create Temp Buffer
+
 
         // initialize the shader attribute handles
         mTextureCoordinateHandle = AttribVariable.A_TexCoordinate.getHandle();
@@ -91,24 +103,59 @@ public class Vertices {
         mIndices.clear();
         mIndices.put(indices, offset, length);
         mIndices.flip();
-        mNumIndices = length;
     }
 
     /**
-     * Set the specified vertices in the vertex buffer. Optimised to use int buffer.
+     * Set the specified vertices in the vertex buffer.
      * @param vertices Array of vertices (floats) to set
-     * @param offset Offset to first vertex in the array
-     * @param length Number of floats in the vertex array. For easy setting use vertexCount * (vertexSize / 4)
      */
-    public void setVertices(float[] vertices, int offset, int length) {
-        mVertices.clear();
-        int last = offset + length;
-        for (int i = offset, j = 0; i < last; i++, j++) {
-            mTempBuffer[j] = Float.floatToRawIntBits(vertices[j]);
+    public void setVertices(float[] vertices) {
+        if (vertices.length != mPositionCount * mNumVertices) {
+            throw new IllegalArgumentException("Invalid vertex array size");
         }
-        mVertices.put(mTempBuffer, 0, length);
+        mVertexCoords = vertices;
+        resetFloatBuffer();
+    }
+
+    public void setTextureCoords(float[] coords) {
+        if (coords.length != TEXCOORD_CNT * mNumVertices) {
+            throw new IllegalArgumentException("Invalid tex-coord array size");
+        }
+        mTexCoords = coords;
+        resetFloatBuffer();
+    }
+
+    public void setMVPIndices(float[] indices) {
+        if (indices.length != MVP_MATRIX_INDEX_CNT * mNumVertices) {
+            throw new IllegalArgumentException("Invalid mvp-index array size");
+        }
+        mMVPIndices = indices;
+        resetFloatBuffer();
+    }
+
+    private void resetFloatBuffer() {
+        int len = mNumVertices * mVertexStride;
+        float[] buff = new float[len];
+
+        for (int c = 0, i = 0, j = 0, k = 0; i < len; c++) {
+            for (; j < (c + 1) * mPositionCount;) {
+                buff[i++] = mVertexCoords[j++];
+            }
+
+            if (mUsesTextureCoords) {
+                for (; k < (c + 1) * TEXCOORD_CNT ;) {
+                    buff[i++] = mTexCoords[k++];
+                }
+            }
+
+            if (mUsesMVPIndex) {
+                buff[i++] = mMVPIndices[c];
+            }
+        }
+
+        mVertices.clear();
+        mVertices.put(buff, 0, len);
         mVertices.flip();
-        mNumVertices = length / mVertexStride;
     }
 
     private void bind(float[] mvpMatrix) {
@@ -124,20 +171,20 @@ public class Vertices {
                 GLES20.GL_FLOAT, false, mVertexSize, mVertices);
         GLES20.glEnableVertexAttribArray(mPositionHandle);
 
-        if (mProgram.usesVariable(UniformVariable.U_Colour)) {
+        if (mUsesColour) {
             int colourHandle = GLES20.glGetUniformLocation(mProgram.getHandle(), UniformVariable.U_Colour.getName());
             GLES20.glUniform4fv(colourHandle, 1, mShape.getColour(), 0);
             GLES20.glEnableVertexAttribArray(colourHandle);
         }
 
-        if (mProgram.usesVariable(UniformVariable.U_Texture)) {
+        if (mUsesTexture) {
             int textureUniformHandle = GLES20.glGetUniformLocation(mProgram.getHandle(), UniformVariable.U_Texture.getName());
             GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
             GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, mShape.getTextureId());
             GLES20.glUniform1i(textureUniformHandle, 0);
         }
 
-        if (mProgram.usesVariable(AttribVariable.A_TexCoordinate)) {
+        if (mUsesTextureCoords) {
             // bind texture position pointer
             mVertices.position(mPositionCount);  // Set Vertex Buffer to Texture Coords (NOTE: position based on whether color is also specified)
             GLES20.glVertexAttribPointer(mTextureCoordinateHandle, TEXCOORD_CNT,
@@ -149,7 +196,7 @@ public class Vertices {
         }
 
         // bind MVP Matrix index position handle
-        if (mProgram.usesVariable(AttribVariable.A_MVPMatrixIndex)) {
+        if (mUsesMVPIndex) {
             GLES20.glVertexAttribPointer(mMVPIndexHandle, MVP_MATRIX_INDEX_CNT,
                     GLES20.GL_FLOAT, false, mVertexSize, mVertices);
             GLES20.glEnableVertexAttribArray(mMVPIndexHandle);

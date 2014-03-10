@@ -25,8 +25,6 @@ public class Polygon extends Shape {
 
     private static final float color[] = { 0.63671875f, 0.76953125f, 0.22265625f, 0.0f };
 
-    private final com.nickstephen.gamelib.opengl.text.Vertices mVertices;
-
     private float mRadius;
     private float mAngle;
 
@@ -96,7 +94,7 @@ public class Polygon extends Shape {
             x *= mRadialFactor;
             y *= mRadialFactor;
         }
-        mVertices.setVertices(buff, 0, buff.length);
+        mVertices.setVertices(buff);
     }
 
     public void moveTo(float newCenterX, float newCenterY, float newAngle) {

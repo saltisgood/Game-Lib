@@ -39,8 +39,8 @@ public abstract class Program {
         mInitialized = true;
     }
 
-    public void init(String vertexShaderCode, String fragmentShaderCode, AttribVariable[] attribVariables, UniformVariable[] uniformVariables) {
-        init(vertexShaderCode, fragmentShaderCode, attribVariables);
+    public void init(String vertexShaderCode, String fragmentShaderCode, AttribVariable[] attrVariables, UniformVariable[] uniformVariables) {
+        init(vertexShaderCode, fragmentShaderCode, attrVariables);
         mUniformVariables = uniformVariables;
     }
 

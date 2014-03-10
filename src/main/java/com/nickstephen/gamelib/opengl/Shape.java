@@ -13,6 +13,7 @@ import com.nickstephen.gamelib.GeneralUtil;
 import com.nickstephen.gamelib.opengl.layout.Container;
 import com.nickstephen.gamelib.opengl.program.GenericProgram;
 import com.nickstephen.gamelib.opengl.program.Program;
+import com.nickstephen.gamelib.opengl.text.*;
 import com.nickstephen.gamelib.opengl.widget.IOnClickL;
 import com.nickstephen.gamelib.opengl.widget.ITouchL;
 
@@ -44,6 +45,7 @@ public abstract class Shape implements ITouchL {
     protected final int mTouchSlop;
     private GLSurfaceView mSurface;
     private int mTextureId;
+    protected com.nickstephen.gamelib.opengl.text.Vertices mVertices;
 
     // Positions
     /**
@@ -385,7 +387,11 @@ public abstract class Shape implements ITouchL {
         return mProgram;
     }
 
-    public abstract void draw(float[] VPMatrix);
+    public void draw(float[] mvpMatrix) {
+        if (mVertices != null) {
+            mVertices.draw(mvpMatrix);
+        }
+    }
 
     private final class CheckForTap implements Runnable {
         public void run() {

@@ -38,9 +38,9 @@ public class Text extends Shape {
     }
 
     @Override
-    public void draw(float[] VPMatrix) {
+    public void draw(float[] mvpMatrix) {
         TextUtil.getInstance().load(this);
-        TextUtil.getInstance().draw(VPMatrix);
+        TextUtil.getInstance().draw(mvpMatrix);
     }
 
     public String getText() {
