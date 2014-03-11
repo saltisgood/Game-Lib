@@ -1,23 +1,28 @@
 package com.nickstephen.gamelib.opengl;
 
 /**
- * Created by Nick Stephen on 6/03/14.
+ * Simple abstraction of the U,V coordinates of textures used with a vertex.
+ * @author Nick Stephen
  */
 public class TextureRegion {
 
     //--Members--//
-    public float u1, v1;                               // Top/Left U,V Coordinates
-    public float u2, v2;                               // Bottom/Right U,V Coordinates
+    public final float u1, v1;                               // Top/Left U,V Coordinates
+    public final float u2, v2;                               // Bottom/Right U,V Coordinates
 
-    //--Constructor--//
-    // D: calculate U,V coordinates from specified texture coordinates
-    // A: texWidth, texHeight - the width and height of the texture the region is for
-    //    x, y - the top/left (x,y) of the region on the texture (in pixels)
-    //    width, height - the width and height of the region on the texture (in pixels)
+    /**
+     * Calculate U,V coordinates from specified texture coordinates
+     * @param texWidth The width of the texture the region is for
+     * @param texHeight The height of the texture the region is for
+     * @param x The top left of the region on the texture (x-axis, pixels)
+     * @param y The top left of the region on the texture (y-axis, pixels)
+     * @param width The width of the region on the texture (in pixels)
+     * @param height The height of the region on the texture (in pixels)
+     */
     public TextureRegion(float texWidth, float texHeight, float x, float y, float width, float height)  {
-        this.u1 = x / texWidth;                         // Calculate U1
-        this.v1 = y / texHeight;                        // Calculate V1
-        this.u2 = this.u1 + ( width / texWidth );       // Calculate U2
-        this.v2 = this.v1 + ( height / texHeight );     // Calculate V2
+        u1 = x / texWidth;                         // Calculate U1
+        v1 = y / texHeight;                        // Calculate V1
+        u2 = u1 + ( width / texWidth );       // Calculate U2
+        v2 = v1 + ( height / texHeight );     // Calculate V2
     }
 }

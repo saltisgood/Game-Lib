@@ -1,12 +1,14 @@
 package com.nickstephen.gamelib.opengl.program;
 
 /**
- * Created by Nick Stephen on 6/03/14.
+ * A {@link Program} that is used for up to 24 vertices at once, supporting grayscale textures multiplied
+ * by a 4-vector colour. Make sure to call to {@link #init()} after constructing and before use.
+ * @author Nick Stephen
  */
 public class BatchTextProgram extends Program {
 
-    private static final AttribVariable[] programVariables = {
-            AttribVariable.A_Position, AttribVariable.A_TexCoordinate, AttribVariable.A_MVPMatrixIndex,
+    private static final AttrVariable[] programVariables = {
+            AttrVariable.A_Position, AttrVariable.A_TexCoordinate, AttrVariable.A_MVPMatrixIndex,
     };
 
     private static final UniformVariable[] uniVariables = { UniformVariable.U_MVPMatrix, UniformVariable.U_Texture, UniformVariable.U_Colour };
@@ -42,6 +44,9 @@ public class BatchTextProgram extends Program {
                     // it when computing color output (otherwise font is always black)
                     + "}                             \n";
 
+    /**
+     * Initialise the program. Creates the shaders, program and links them.
+     */
     @Override
     public void init() {
         super.init(vertexShaderCode, fragmentShaderCode, programVariables, uniVariables);

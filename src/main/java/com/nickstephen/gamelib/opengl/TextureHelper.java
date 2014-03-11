@@ -7,9 +7,18 @@ import android.opengl.GLES20;
 import android.opengl.GLUtils;
 
 /**
- * Created by Nick Stephen on 6/03/14.
+ * A helper class for loading textures.
+ * @author Nick Stephen
  */
 public class TextureHelper {
+    private TextureHelper() {} // Don't use
+
+    /**
+     * Load a texture from a context's resources
+     * @param context The context to use
+     * @param resourceId The id of the image resource
+     * @return The id of the texture as loaded into OpenGL
+     */
     public static int loadTexture(final Context context, final int resourceId) {
         final BitmapFactory.Options options = new BitmapFactory.Options();
         options.inScaled = false; // No pre-scaling
@@ -18,6 +27,11 @@ public class TextureHelper {
         return loadTexture(bitmap);
     }
 
+    /**
+     * Load a texture into OpenGL from a Bitmap
+     * @param bitmap The bitmap to convert to a texture
+     * @return The id of the texture as loaded into OpenGL
+     */
     public static int loadTexture(Bitmap bitmap)
     {
         final int[] textureHandle = new int[1];

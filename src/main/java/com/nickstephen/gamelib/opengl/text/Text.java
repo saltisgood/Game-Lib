@@ -10,21 +10,52 @@ import com.nickstephen.gamelib.opengl.program.BatchTextProgram;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Created by Nick Stephen on 8/03/14.
+ * <p>An extension to Shape meant for drawing text to screen (the equivalent of {@link android.widget.TextView}).
+ * Note that the bulk of the code is in {@link com.nickstephen.gamelib.opengl.text.TextUtil}, this is
+ * just the programmer visible API side of things.</p>
+ *
+ * Doesn't currently support text with over 24 characters. //TODO: Increase this limit
+ * @author Nick Stephen
  */
 public class Text extends Shape {
     private static final float[] defColour = { 1.0f, 1.0f, 1.0f, 1.0f };
 
+    /**
+     * Destroys the singleton instance of {@link com.nickstephen.gamelib.opengl.text.TextUtil}. Should
+     * always be called on pausing the GLThread and never before!
+     */
     public static void destroyInstance() {
         TextUtil.destroyInstance();
     }
 
-    protected String mText;
+    protected String mText = "";
+    boolean mCentered = true;
     float mScaleX = 1.0f;
     float mScaleY = 1.0f;
     float mSpaceX;
-    boolean mCentered = true;
 
+    /**
+     * Default constructor.
+     * @param context A context
+     * @param parent The container for this shape
+     * @param fontFile The filename of the font file to be loaded (must be located in the /assets/
+     *                 folder)
+     * @param text The initial text to display to screen
+     */
+    public Text(@NotNull Context context, @NotNull Container parent, @NotNull String fontFile, @NotNull String text) {
+        this(context, parent, fontFile);
+
+        setText(text);
+    }
+
+    /**
+     * Constructor 1. Doesn't automatically set the text to display, which should be done before any
+     * rendering passes.
+     * @param context A context
+     * @param parent The container for this shape
+     * @param fontFile The filename of the font file to be loaded (must be located in the /assets/
+     *                 folder)
+     */
     public Text(@NotNull Context context, @NotNull Container parent, @NotNull String fontFile) {
         super(context, parent, new BatchTextProgram());
 
@@ -37,65 +68,41 @@ public class Text extends Shape {
         mVertices = new SpriteHelper(this);
     }
 
-    public Text(@NotNull Context context, @NotNull Container parent, @NotNull String fontFile, String text) {
-        this(context, parent, fontFile);
-
-        setText(text);
-    }
-
-    public String getText() {
+    /**
+     * Get the text which will be displayed to screen
+     * @return The string version of the text
+     */
+    public @NotNull String getText() {
         return mText;
     }
 
-    public void setText(String text) {
+    /**
+     * Sets the text to be displayed to screen. NOTE: Will only display the first 24 characters!
+     * @see com.nickstephen.gamelib.opengl.text.Text
+     * @param text The new text to display
+     */
+    public void setText(@NotNull String text) {
         mText = text;
 
         reloadVertices();
     }
 
-    public void setCentered(boolean val) {
-        mCentered = val;
-
-        reloadVertices();
-    }
-
-    public void setScaleX(float x) {
-        mScaleX = x;
-
-        reloadVertices();
-    }
-
-    public void setScaleY(float y) {
-        mScaleY = y;
-
-        reloadVertices();
-    }
-
-    public void setSpaceX(float x) {
-        mScaleX = x;
-
-        reloadVertices();
-    }
-
-    public void setScale(float x, float y) {
-        mScaleX = x;
-        mScaleY = y;
-        reloadVertices();
-    }
-
+    /**
+     * Reload the vertex information with any changes that have previously been performed on this
+     * object.
+     */
     private void reloadVertices() {
         ((SpriteHelper) mVertices).reset();
         TextUtil.getInstance().load(this).addTextToBatch((SpriteHelper) mVertices);
         ((SpriteHelper) mVertices).finishAddingSprites();
     }
 
-    @Override
-    public void moveTo(float newX, float newY) {
-        super.moveTo(newX, newY);
-
-        reloadVertices();
-    }
-
+    /**
+     * Move a relative distance inside the container. Just overriden here to make sure there's a call
+     * to {@link #reloadVertices()}.
+     * @param dx The distance between the old and new x offsets (pixels)
+     * @param dy The distance between the old and new y offsets (pixels)
+     */
     @Override
     public void move(float dx, float dy) {
         super.move(dx, dy);
@@ -103,8 +110,85 @@ public class Text extends Shape {
         reloadVertices();
     }
 
+    /**
+     * Move to a new container offset. Just override here to make sure there's a call to
+     * {@link #reloadVertices()}.
+     * @param newX The new x offset (pixels)
+     * @param newY The new y offset (pixels)
+     */
     @Override
-    public void draw(float[] vpMatrix) {
+    public void moveTo(float newX, float newY) {
+        super.moveTo(newX, newY);
+
+        reloadVertices();
+    }
+
+    /**
+     * Overriden call to draw here because the model matrix transformation has already taken place
+     * in the {@link com.nickstephen.gamelib.opengl.text.TextUtil#addTextToBatch(com.nickstephen.gamelib.opengl.SpriteHelper)}
+     * method. Could be modified later if necessary.
+     * @param vpMatrix The view/projection matrix to apply
+     */
+    @Override
+    public void draw(@NotNull float[] vpMatrix) {
         mVertices.draw(vpMatrix);
+    }
+
+    /**
+     * Sets whether the text should be centered around its given position
+     * @param val True to centre, false otherwise
+     */
+    public void setCentered(boolean val) {
+        mCentered = val;
+
+        reloadVertices();
+    }
+
+    /**
+     * Set both of the multipliers for the text's display scale. Should normally be 0 < x < 1 so as
+     * not to decrease the quality of the text texture. If you need a bigger texture then increase
+     * the value of {@link com.nickstephen.gamelib.opengl.text.TextUtil#FONT_SIZE}.
+     * @param x The new scale for the x-axis
+     * @param y The new scale for the y-axis
+     */
+    public void setScale(float x, float y) {
+        mScaleX = x;
+        mScaleY = y;
+        reloadVertices();
+    }
+
+    /**
+     * Sets the scale to multiply the text's size by in the x-axis. De-coupling this from the y scale
+     * will result in warped text.
+     * @see #setScale(float, float)
+     * @param x The new scale for the x-axis
+     */
+    public void setScaleX(float x) {
+        mScaleX = x;
+
+        reloadVertices();
+    }
+
+    /**
+     * Sets the scale to multiply the text's size by in the y-axis. De-coupling this from the x scale
+     * will result in warped text.
+     * @see #setScale(float, float)
+     * @param y The new scale for the y-axis
+     */
+    public void setScaleY(float y) {
+        mScaleY = y;
+
+        reloadVertices();
+    }
+
+    /**
+     * Set the space to put between characters when they're displayed on screen, i.e. controls
+     * keming.
+     * @param x Distance in pixels
+     */
+    public void setSpaceX(float x) {
+        mScaleX = x;
+
+        reloadVertices();
     }
 }

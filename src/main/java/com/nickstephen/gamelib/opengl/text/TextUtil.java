@@ -21,46 +21,44 @@ import com.nickstephen.gamelib.opengl.program.Program;
  */
 class TextUtil {
     /**
-     * Set as the maximum size you want your font to be displayed without scaling. Scaling above
-     * 1 reduces the quality of the texture.
-     */
-    private static final int FONT_SIZE = 40;
-    /**
-     * The default colour of the font.
-     */
-    private static final int FONT_COLOUR = 0xFFFFFFFF;
-
-    /**
-     * First character (ASCII Code)
-     */
-    private static final int CHAR_START = (int)' ';
-    /**
      * Last character (ASCII Code)
      */
     private static final int CHAR_END = (int)'~';
-    /**
-     * Character count (including character to use for Unknown)
-     */
-    private static final int CHAR_CNT = (((CHAR_END - CHAR_START) + 1) + 1);
     /**
      * Character to use for unknown (ASCII code)
      */
     private static final int CHAR_NONE = (int)' ';
     /**
-     * Minimum font size (pixels)
+     * First character (ASCII Code)
      */
-    private static final int FONT_SIZE_MIN = 6;
+    private static final int CHAR_START = (int)' ';
+    /**
+     * Character count (including character to use for Unknown)
+     */
+    private static final int CHAR_CNT = (((CHAR_END - CHAR_START) + 1) + 1);
+
+    private static final int CHAR_UNKNOWN = (CHAR_CNT - 1);
+    /**
+     * The default colour of the font.
+     */
+    private static final int FONT_COLOUR = 0xFFFFFFFF;
+    /**
+     * Set as the maximum size you want your font to be displayed without scaling. Scaling above
+     * 1 reduces the quality of the texture.
+     */
+    private static final int FONT_SIZE = 40;
     /**
      * Maximum font size (pixels)
      */
     private static final int FONT_SIZE_MAX = 180;
-    private static final int CHAR_UNKNOWN = (CHAR_CNT - 1);
-
+    /**
+     * Minimum font size (pixels)
+     */
+    private static final int FONT_SIZE_MIN = 6;
+    /**
+     * The singleton instance
+     */
     private static TextUtil sInstance;
-
-    static TextUtil getInstance() {
-        return sInstance;
-    }
 
     /**
      * MUST BE CALLED ON GLThread.Pause()! Otherwise errors will occur on restart with cached programs
@@ -70,6 +68,23 @@ class TextUtil {
         sInstance = null;
     }
 
+    /**
+     * Get the singleton instance. For this to be a non-null call, {@link #init(android.content.res.AssetManager, String)}
+     * must have been previously called!
+     * @return The {@link com.nickstephen.gamelib.opengl.text.TextUtil} instance to use
+     */
+    static TextUtil getInstance() {
+        return sInstance;
+    }
+
+    /**
+     * Initialise the singleton instance. If the instance is already non-null, will just return a
+     * reference to that instance.
+     * @param assets The {@link android.content.res.AssetManager} to get access to the font file
+     * @param file The filename of the font file to use to load the font
+     * @return A reference to the newly constructed {@link com.nickstephen.gamelib.opengl.text.TextUtil}
+     * instance
+     */
     static TextUtil init(AssetManager assets, String file) {
         if (sInstance == null) {
             sInstance = new TextUtil(assets, file);
@@ -77,24 +92,29 @@ class TextUtil {
         return sInstance;
     }
 
-    private Program mProgram;
-    private float[] mCharWidths = new float[CHAR_CNT];
+    private int mCellHeight;
+    private int mCellWidth;
+    private float mCharHeight;
     private TextureRegion[] mCharRegion = new TextureRegion[CHAR_CNT];
+    private float mCharWidthMax;
+    private float[] mCharWidths = new float[CHAR_CNT];
+    private int mColCount;
     private int mColorHandle;
-    private int mTextureUniformHandle;
-    private float mFontHeight;
     private float mFontAscent;
     private float mFontDescent;
-    private float mCharWidthMax;
-    private float mCharHeight;
-    private int mCellWidth;
-    private int mCellHeight;
-    private int mTextureSize;
-    private int mColCount;
+    private float mFontHeight;
+    private Program mProgram;
     private int mRowCount;
-    private int mTextureId;
     private Text mTextObj;
+    private int mTextureId;
+    private int mTextureSize;
+    private int mTextureUniformHandle;
 
+    /**
+     * Constructor.
+     * @param assets The {@link android.content.res.AssetManager} to get access to the font file
+     * @param file The filename of the font file to use to load the font
+     */
     private TextUtil(AssetManager assets, String file) {
         mProgram = new BatchTextProgram();
         mProgram.init();
@@ -202,11 +222,12 @@ class TextUtil {
         }
     }
 
-    public TextUtil load(Text text) {
-        mTextObj = text;
-        return this;
-    }
-
+    /**
+     * Set the vertex information for the currently loaded {@link com.nickstephen.gamelib.opengl.text.Text}
+     * object so that it can be batch drawn on the next rendering pass.
+     * @param spriteHelper The {@link com.nickstephen.gamelib.opengl.SpriteHelper} object to hold the
+     *                     new vertex/texture information
+     */
     public void addTextToBatch(SpriteHelper spriteHelper) {
         float chrHeight = mCellHeight * mTextObj.mScaleY;          // Calculate Scaled Character Height
         float chrWidth = mCellWidth * mTextObj.mScaleX;            // Calculate Scaled Character Width
@@ -243,6 +264,11 @@ class TextUtil {
         }
     }
 
+    /**
+     * Get the horizontal length of a string of text given the current scaling
+     * @param text The string to test
+     * @return The pixel length of the string
+     */
     private float getLength(String text) {
         float len = 0.0f;                               // Working Length
         int strLen = text.length();                     // Get String Length (Characters)
@@ -254,7 +280,23 @@ class TextUtil {
         return len;                                     // Return Total Length
     }
 
+    /**
+     * Get the texture id of the ASCII alphabet texture. Will remain constant until the texture is
+     * unloaded.
+     * @return The location of the texture in the OpenGL context
+     */
     public int getTextureId() {
         return mTextureId;
+    }
+
+    /**
+     * Load a {@link com.nickstephen.gamelib.opengl.text.Text} object to be used for all future method
+     * calls until another is set.
+     * @param text The {@link com.nickstephen.gamelib.opengl.text.Text} object to use
+     * @return A reference to this object for method chaining
+     */
+    public TextUtil load(Text text) {
+        mTextObj = text;
+        return this;
     }
 }

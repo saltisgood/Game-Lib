@@ -1,10 +1,12 @@
 package com.nickstephen.gamelib.opengl.program;
 
 /**
- * Created by Nick Stephen on 6/03/14.
+ * A {@link Program} that is used for any number of vertices with a single MVP matrix and a
+ * single vector-4 colour.
+ * @author Nick Stephen
  */
 public class GenericProgram extends Program {
-    private static final AttribVariable[] attrVariables = { AttribVariable.A_Position };
+    private static final AttrVariable[] attrVariables = { AttrVariable.A_Position };
     private static final UniformVariable[] uniVariables = { UniformVariable.U_Colour, UniformVariable.U_MVPMatrix };
 
     private static final String mVertexShaderCode =

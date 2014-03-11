@@ -6,23 +6,19 @@ import android.os.Vibrator;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Created by Nick Stephen on 6/03/14.
+ * General utility functions not covered by other classes.
+ * @author Nick Stephen
  */
 public final class GeneralUtil {
     private GeneralUtil() {} // Don't call!
 
     private static Vibrator sVibrator;
 
-    public static @NotNull float[] arrayCopy(@NotNull float[] input) {
-        float[] array = new float[input.length];
-
-        for (int i = 0; i < input.length; i++) {
-            array[i] = input[i];
-        }
-
-        return array;
-    }
-
+    /**
+     * Finds the average value in an array of type long.
+     * @param input The input array to check.
+     * @return The average value in the array.
+     */
     public static long arrayAverage(@NotNull long[] input) {
         long ave = input[0];
 
@@ -33,10 +29,24 @@ public final class GeneralUtil {
         return ave;
     }
 
+    /**
+     * Get a reference to the Vibrator system service
+     * @param context A context
+     */
     public static void setupVibrator(@NotNull Context context) {
-        sVibrator = (Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
+        if (sVibrator == null) {
+            sVibrator = (Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
+        }
     }
 
+    /**
+     * <p>Attempt to vibrate the phone for a given time. Make sure to call
+     * {@link #setupVibrator(android.content.Context)} to get a reference to the Vibrator first. But
+     * the method is null safe.</p>
+     *
+     * <p><strong>NOTE: The calling app must have VIBRATE permission to use this function!</strong></p>
+     * @param time The length of time to vibrate for.
+     */
     public static void vibrate(long time) {
         if (sVibrator != null) {
             sVibrator.vibrate(time);

@@ -3,7 +3,7 @@ package com.nickstephen.gamelib.opengl;
 import android.opengl.GLES20;
 import android.util.Log;
 
-import com.nickstephen.gamelib.opengl.program.AttribVariable;
+import com.nickstephen.gamelib.opengl.program.AttrVariable;
 
 import org.jetbrains.annotations.Nullable;
 
@@ -12,15 +12,42 @@ import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 
 /**
- * Created by Nick Stephen on 6/03/14.
+ * Various utility methods.
+ * @author Nick Stephen
  */
 public class Utilities {
-
     public static final int BYTES_PER_FLOAT = 4;
     public static final int BYTES_PER_SHORT = 2;
     private static final String TAG = "Utilities";
 
-    public static int createProgram(int vertexShaderHandle, int fragmentShaderHandle, @Nullable AttribVariable[] variables) {
+    /**
+     * Utility method for debugging OpenGL calls. Provide the name of the call
+     * just after making it:
+     *
+     * <pre>
+     * mColorHandle = GLES20.glGetUniformLocation(mProgram, "u_Color");
+     * MyGLRenderer.checkGlError("glGetUniformLocation");</pre>
+     *
+     * If the operation is not successful, the check throws an error.
+     *
+     * @param glOperation - Name of the OpenGL call to check.
+     */
+    public static void checkGlError(String glOperation) {
+        int error;
+        while ((error = GLES20.glGetError()) != GLES20.GL_NO_ERROR) {
+            Log.e(TAG, glOperation + ": glError " + error);
+            throw new RuntimeException(glOperation + ": glError " + error);
+        }
+    }
+
+    /**
+     * Create an OpenGL program
+     * @param vertexShaderHandle A handle to a vertex shader to attach to the program
+     * @param fragmentShaderHandle A handle to a fragment shader to attach to the program
+     * @param variables A set of attribute variables to bind the locations of in the program
+     * @return
+     */
+    public static int createProgram(int vertexShaderHandle, int fragmentShaderHandle, @Nullable AttrVariable[] variables) {
         int  mProgram = GLES20.glCreateProgram();
 
         if (mProgram != 0) {
@@ -28,7 +55,7 @@ public class Utilities {
             GLES20.glAttachShader(mProgram, fragmentShaderHandle);
 
             if (variables != null) {
-                for (AttribVariable var: variables) {
+                for (AttrVariable var: variables) {
                     GLES20.glBindAttribLocation(mProgram, var.getHandle(), var.getName());
                 }
             }
@@ -95,31 +122,16 @@ public class Utilities {
         return shaderHandle;
     }
 
+    /**
+     * Generate a new float buffer for storing vertex data
+     * @param verticesData The array of data to store
+     * @return A new float buffer with the information copied from the argument
+     */
     public static FloatBuffer newFloatBuffer(float[] verticesData) {
         FloatBuffer floatBuffer;
         floatBuffer = ByteBuffer.allocateDirect(verticesData.length * BYTES_PER_FLOAT)
                 .order(ByteOrder.nativeOrder()).asFloatBuffer();
         floatBuffer.put(verticesData).position(0);
         return floatBuffer;
-    }
-
-    /**
-     * Utility method for debugging OpenGL calls. Provide the name of the call
-     * just after making it:
-     *
-     * <pre>
-     * mColorHandle = GLES20.glGetUniformLocation(mProgram, "u_Color");
-     * MyGLRenderer.checkGlError("glGetUniformLocation");</pre>
-     *
-     * If the operation is not successful, the check throws an error.
-     *
-     * @param glOperation - Name of the OpenGL call to check.
-     */
-    public static void checkGlError(String glOperation) {
-        int error;
-        while ((error = GLES20.glGetError()) != GLES20.GL_NO_ERROR) {
-            Log.e(TAG, glOperation + ": glError " + error);
-            throw new RuntimeException(glOperation + ": glError " + error);
-        }
     }
 }

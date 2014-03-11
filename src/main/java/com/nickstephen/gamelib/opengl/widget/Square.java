@@ -9,7 +9,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Created by Nick Stephen on 5/03/14.
+ * Convenience extension to {@link com.nickstephen.gamelib.opengl.Polygon} for drawing square primitives.
+ * @see com.nickstephen.gamelib.opengl.widget.Circle
+ * @see com.nickstephen.gamelib.opengl.widget.Triangle
+ * @author Nick Stephen
  */
 public class Square extends Polygon {
     private static float color[] = { 0.2f, 0.709803922f, 0.898039216f, 1.0f };

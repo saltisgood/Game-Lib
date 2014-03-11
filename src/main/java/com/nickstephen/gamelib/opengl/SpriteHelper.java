@@ -3,30 +3,45 @@ package com.nickstephen.gamelib.opengl;
 import android.opengl.GLES20;
 import android.opengl.Matrix;
 
-import com.nickstephen.gamelib.opengl.Shape;
-import com.nickstephen.gamelib.opengl.TextureRegion;
-import com.nickstephen.gamelib.opengl.Vertices;
 import com.nickstephen.lib.Twig;
 
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Created by Nick Stephen on 10/03/14.
+ * <p>An extension to {@link com.nickstephen.gamelib.opengl.Vertices} that is used just for batch rendering
+ * sprites.</p>
+ *
+ * <p>If using this class instead of manually using {@link com.nickstephen.gamelib.opengl.Vertices},
+ * you should only use methods inside this class.</p>
+ *
+ * @author Nick Stephen
  */
 public class SpriteHelper extends Vertices {
     public static final int MAX_SPRITES = 24;
+
     private static final int INDICES_PER_SPRITE = 6;
-    private static final int VERTICES_PER_SPRITE = 4;
     private static final int MAT4_SIZE = 16;
+    private static final int VERTICES_PER_SPRITE = 4;
 
     private int mMaxSprites;
-    private int mNumSprites;
     private float[] mModelMatrices;
+    private int mNumSprites;
 
+    /**
+     * Constructor that uses {@link #MAX_SPRITES} for the maxSprites argument of the other
+     * constructor.
+     * @param shape The shape to associate with these vertices
+     */
     public SpriteHelper(@NotNull Shape shape) {
         this(shape, MAX_SPRITES);
     }
 
+    /**
+     * Default constructor. Note that if maxSprites is greater than {@link #MAX_SPRITES} it will just
+     * get set to that instead.
+     * @param shape The shape to associate with these vertices
+     * @param maxSprites The maximum number of sprites to render at once
+     */
     public SpriteHelper(@NotNull Shape shape, int maxSprites) {
         super(shape,
                 VERTICES_PER_SPRITE * ((maxSprites > MAX_SPRITES) ? MAX_SPRITES : maxSprites),
@@ -48,23 +63,15 @@ public class SpriteHelper extends Vertices {
         setupIndices();
     }
 
-    private void setupIndices() {
-        int len = INDICES_PER_SPRITE * mMaxSprites;
-        short[] indices = new short[len];
-
-        short j = 0;                                    // Counter
-        for ( int i = 0; i < len; i+= INDICES_PER_SPRITE, j += VERTICES_PER_SPRITE )  {  // FOR Each Index Set (Per Sprite)
-            indices[i + 0] = (short)( j + 0 );           // Calculate Index 0
-            indices[i + 1] = (short)( j + 1 );           // Calculate Index 1
-            indices[i + 2] = (short)( j + 2 );           // Calculate Index 2
-            indices[i + 3] = (short)( j + 2 );           // Calculate Index 3
-            indices[i + 4] = (short)( j + 3 );           // Calculate Index 4
-            indices[i + 5] = (short)( j + 0 );           // Calculate Index 5
-        }
-
-        setIndices(indices, 0, len);
-    }
-
+    /**
+     * Add a sprite to be displayed.
+     * @param x The centre x offset of this sprite
+     * @param y The centre y offset of this sprite
+     * @param width The width of the sprite
+     * @param height The height of the sprite
+     * @param region The region of the texture associated with this sprite
+     * @param modelMatrix The model matrix to apply to this sprite
+     */
     public void addSpriteToBatch(float x, float y, float width, float height, TextureRegion region,
                                  float[] modelMatrix) {
         if (mNumSprites == mMaxSprites) {
@@ -114,12 +121,13 @@ public class SpriteHelper extends Vertices {
         mNumSprites++;
     }
 
-    public void finishAddingSprites() {
-        resetFloatBuffer();
-    }
-
+    /**
+     * Overridden in order to generate all the MVP matrices associated with the sprites given a
+     * view/projection matrix.
+     * @param vpMatrix The view/projection matrix to use when drawing
+     */
     @Override
-    public void draw(float[] vpMatrix) {
+    public void draw(@NotNull float[] vpMatrix) {
         float[] mvpMatrices = new float[mNumSprites * MAT4_SIZE];
 
         for (int i = 0; i < mNumSprites; i++) {
@@ -130,7 +138,40 @@ public class SpriteHelper extends Vertices {
         super.draw(mvpMatrices);
     }
 
+    /**
+     * Call once you've finished adding sprites. This locks in the sprite information into the
+     * float buffers in the super class.
+     */
+    public void finishAddingSprites() {
+        resetFloatBuffer();
+    }
+
+    /**
+     * Reset. This sets the number of sprites to 0, so you can restart adding sprites.
+     * Note to self, this could also be a mechanism for drawing more than 24 sprites in a single
+     * rendering pass if you wanted to...
+     */
     public void reset() {
         mNumSprites = 0;
+    }
+
+    /**
+     * Convenience method for setting up the indices. Should only be called from the constructor.
+     */
+    private void setupIndices() {
+        int len = INDICES_PER_SPRITE * mMaxSprites;
+        short[] indices = new short[len];
+
+        short j = 0;                                    // Counter
+        for ( int i = 0; i < len; i+= INDICES_PER_SPRITE, j += VERTICES_PER_SPRITE )  {  // FOR Each Index Set (Per Sprite)
+            indices[i + 0] = (short)( j + 0 );           // Calculate Index 0
+            indices[i + 1] = (short)( j + 1 );           // Calculate Index 1
+            indices[i + 2] = (short)( j + 2 );           // Calculate Index 2
+            indices[i + 3] = (short)( j + 2 );           // Calculate Index 3
+            indices[i + 4] = (short)( j + 3 );           // Calculate Index 4
+            indices[i + 5] = (short)( j + 0 );           // Calculate Index 5
+        }
+
+        setIndices(indices, 0, len);
     }
 }

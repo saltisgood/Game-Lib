@@ -9,7 +9,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Created by Nick Stephen on 5/03/14.
+ * Convenience extension to {@link com.nickstephen.gamelib.opengl.Polygon} for easy drawing of
+ * triangle primitives.
+ * @see com.nickstephen.gamelib.opengl.widget.Square
+ * @see com.nickstephen.gamelib.opengl.widget.Circle
+ * @author Nick Stephen
  */
 public class Triangle extends Polygon {
     private static float color[] = { 0.63671875f, 0.76953125f, 0.22265625f, 0.0f };

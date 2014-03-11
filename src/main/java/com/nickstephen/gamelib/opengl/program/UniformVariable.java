@@ -1,7 +1,9 @@
 package com.nickstephen.gamelib.opengl.program;
 
 /**
- * Created by Nick Stephen on 10/03/14.
+ * An enum used for keeping track of the uniform variables in use in a
+ * {@link com.nickstephen.gamelib.opengl.program.Program}'s shaders.
+ * @author Nick Stephen
  */
 public enum UniformVariable {
     U_Colour(4, "u_Color"),
