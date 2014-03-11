@@ -40,7 +40,7 @@ public class Container extends Quadrilateral {
     protected final List<Container> mChildContainers;
     protected final List<Shape> mChildren;
 
-    protected float[] mVPMatrix;
+    protected final float[] mVPMatrix = new float[16];
 
     private int mActivePointerId = INVALID_POINTER;
     private int mBottom;
@@ -153,22 +153,19 @@ public class Container extends Quadrilateral {
      * @param viewMatrix The view matrix (modified by containers to account for different offsets)
      */
     public void draw(float[] projMatrix, float[] viewMatrix) {
-        float[] scratch = new float[16];
-
         if (!VersionControl.IS_RELEASE) {
-            Matrix.translateM(scratch, 0, viewMatrix, 0, mParentOffsetX, mParentOffsetY, 0);
-            mVPMatrix = scratch;
+            Matrix.translateM(mScratch, 0, viewMatrix, 0, mParentOffsetX, mParentOffsetY, 0);
+            System.arraycopy(mScratch, 0, mVPMatrix, 0, 16);
             draw(projMatrix);
         }
-        mVPMatrix = new float[16];
 
-        Matrix.translateM(scratch, 0, viewMatrix, 0, this.getX() + mParentOffsetX, this.getY() + mParentOffsetY, 0);
+        Matrix.translateM(mScratch, 0, viewMatrix, 0, this.getX() + mParentOffsetX, this.getY() + mParentOffsetY, 0);
 
         for (Container c : mChildContainers) {
-            c.draw(projMatrix, scratch);
+            c.draw(projMatrix, mScratch);
         }
 
-        Matrix.multiplyMM(mVPMatrix, 0, projMatrix, 0, scratch, 0);
+        Matrix.multiplyMM(mVPMatrix, 0, projMatrix, 0, mScratch, 0);
 
         GLES20.glEnable(GLES20.GL_SCISSOR_TEST);
         GLES20.glScissor(getAbsoluteBLCornerX(), getAbsoluteBLCornerY(), (int) mScreenWidth, (int) mScreenHeight);
@@ -252,16 +249,16 @@ public class Container extends Quadrilateral {
      */
     @Override
     public void move(float dx, float dy) {
-        super.move(dx, dy);
 
         if (mInfiniteBounds) {
+            super.move(dx, dy);
             return;
         }
 
         // If there are non-infinite bounds, make sure that the user can't drag outside those bounds
 
-        float posX = this.getX();
-        float posY = this.getY();
+        float posX = this.getX() + dx;
+        float posY = this.getY() + dy;
         float newX = posX;
         float newY = posY;
 

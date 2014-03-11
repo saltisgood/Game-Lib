@@ -22,10 +22,7 @@ public class Polygon extends Shape {
 
     private static final float color[] = { 0.63671875f, 0.76953125f, 0.22265625f, 0.0f };
     private final int mSideCount;
-    private float mAngle;
-    private float mRadialFactor;
     private float mRadius;
-    private float mTanFactor;
 
     public Polygon(@NotNull Context context, @Nullable Container parent, float posX, float posY, float radius, int numberOfSides) {
         this(context, parent, posX, posY, radius, 0, numberOfSides, color);
@@ -52,9 +49,7 @@ public class Polygon extends Shape {
         setSize(radius);
 
         mSideCount = numberOfSides;
-        float theta = 2.0f * 3.14159f / (float) mSideCount;
-        mTanFactor = (float)Math.tan(theta);
-        mRadialFactor = (float)Math.cos(theta);
+
 
         if (colour.length != 4) {
             throw new RuntimeException("Colour vector must be 4 long");
@@ -63,7 +58,8 @@ public class Polygon extends Shape {
 
         mVertices = new Vertices(this, mSideCount + 1, mSideCount * 3, GLES20.GL_TRIANGLE_FAN);
 
-        moveTo(posX, posY, angle);
+        moveTo(posX, posY);
+        setAngle(angle);
 
         short[] order = new short[3 * mSideCount];
         for (int i = 0; i < mSideCount; i++) {
@@ -72,6 +68,8 @@ public class Polygon extends Shape {
             order[3 * i + 2] = (i + 2 <= mSideCount) ? (short)(i + 2) : 1;
         }
         mVertices.setIndices(order, 0, 3 * mSideCount);
+
+        setVertices();
     }
 
     public Polygon(@NotNull Context context, @Nullable Container parent, float posX, float posY, float radius, float angle, int numberOfSides) {
@@ -83,60 +81,36 @@ public class Polygon extends Shape {
      *
      * @param vpMatrix - The View Projection matrix with which to draw this shape.
      */
-    public void draw(@NotNull float[] vpMatrix) {
+    /*public void draw(@NotNull float[] vpMatrix) {
         mVertices.draw(vpMatrix);
-    }
+    } */
 
-    /**
-     * Move the centre of the polygon to a new position.
-     * @param newCenterX The new centre offset of the polygon (x-axis, pixels)
-     * @param newCenterY The new centre offset of the polygon (y-axis, pixels)
-     * @param newAngle The new angle of the polygon (degrees)
-     */
-    public void moveTo(float newCenterX, float newCenterY, float newAngle) {
-        mAngle = (float) Math.toRadians(newAngle);
-        moveTo(newCenterX, newCenterY);
-    }
-
-    /**
-     * Override to work out the new coordinates of the vertices. May be updated later to better
-     * utilise the build in draw command in Shape.
-     * @param newCenterX The new centre offset of the polygon (x-axis, pixels)
-     * @param newCenterY The new centre offset of the polygon (y-axis, pixels)
-     */
-    @Override
-    public void moveTo(float newCenterX, float newCenterY) {
-        super.moveTo(newCenterX, newCenterY);
-
+    private void setVertices() {
         // Calculate the vertex positions
-        float x = (float)Math.cos(mAngle) * mRadius;
-        float y = (float)Math.sin(mAngle) * mRadius;
+        //float x = (float)Math.cos(mAngle) * mRadius;
+        //float y = (float)Math.sin(mAngle) * mRadius;
+        float x = mRadius, y = 0;
         float[] buff = new float[COORDS_PER_VERTEX * (mSideCount + 1)];
 
-        buff[0] = newCenterX;
-        buff[1] = newCenterY;
+        float theta = 2.0f * 3.14159f / (float) mSideCount;
+        float tanFactor = (float) Math.tan(theta);
+        float radialFactor = (float) Math.cos(theta);
+
+        buff[0] = 0;
+        buff[1] = 0;
         for (int i = 1; i < mSideCount + 1; i++) {
-            buff[COORDS_PER_VERTEX * i] = x + newCenterX;
-            buff[COORDS_PER_VERTEX * i + 1] = y + newCenterY;
+            buff[COORDS_PER_VERTEX * i] = x;
+            buff[COORDS_PER_VERTEX * i + 1] = y;
 
             float tx = -y;
             float ty = x;
 
-            x += tx * mTanFactor;
-            y += ty * mTanFactor;
+            x += tx * tanFactor;
+            y += ty * tanFactor;
 
-            x *= mRadialFactor;
-            y *= mRadialFactor;
+            x *= radialFactor;
+            y *= radialFactor;
         }
         mVertices.setVertices(buff);
-    }
-
-    /**
-     * Rotate the polygon.
-     * @param newAngle The new angle of the polygon (degrees)
-     */
-    public void rotate(float newAngle) {
-        mAngle = (float) Math.toRadians(newAngle);
-        moveTo(this.getX(), this.getY());
     }
 }

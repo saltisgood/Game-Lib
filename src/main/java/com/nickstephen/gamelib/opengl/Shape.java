@@ -31,11 +31,19 @@ public abstract class Shape implements ITouchL {
     private static final int PFLAG_PRESSED = 0x00004000;
 
     protected final Program mProgram;
+    /**
+     * A 4x4 float matrix pre-allocated here and whose contents can not be trusted in between
+     * method calls. Useful as a matrix whose contents are needed only briefly and repeatedly.
+     */
+    protected final float[] mScratch = new float[16];
     protected final int mTouchSlop;
+
+    private final float[] mModelMatrix = new float[16];
 
     protected float[] mColour = new float[4];
     protected Vertices mVertices;
 
+    private float mAngle;
     /**
      * The baseline X position relative to the container
      */
@@ -56,6 +64,7 @@ public abstract class Shape implements ITouchL {
      */
     private float mLeft;
     private boolean mLongClickable = false;
+    private boolean mModelMatrixInvalidated = true;
     private IOnClickL mOnClickListener;
     private IOnClickL mOnLongClickListener;
     private Container mParent;
@@ -112,6 +121,24 @@ public abstract class Shape implements ITouchL {
         if (parent != null) {
             mSurface = parent.getSurface();
         }
+    }
+
+    /**
+     * Get the current orientation of the shape (degrees)
+     * @return The orientation of the shape
+     */
+    public float getAngle() {
+        return mAngle;
+    }
+
+    /**
+     * Set the new angle of the shape
+     * @param angle The angle in degrees
+     */
+    public void setAngle(float angle) {
+        mAngle = angle;
+
+        mModelMatrixInvalidated = true;
     }
 
     /**
@@ -181,9 +208,9 @@ public abstract class Shape implements ITouchL {
      */
     public void draw(@NotNull float[] vpMatrix) {
         if (mVertices != null) {
-            float[] mvpMatrix = getModelMatrix();
-            Matrix.multiplyMM(mvpMatrix, 0, vpMatrix, 0, mvpMatrix, 0);
-            mVertices.draw(mvpMatrix);
+            float[] modelMatrix = getModelMatrix();
+            Matrix.multiplyMM(mScratch, 0, vpMatrix, 0, modelMatrix, 0);
+            mVertices.draw(mScratch);
         }
     }
 
@@ -209,9 +236,14 @@ public abstract class Shape implements ITouchL {
      * @return The float matrix
      */
     public @NotNull float[] getModelMatrix() {
-        float[] mvpMatrix = new float[16];
-        Matrix.translateM(mvpMatrix, 0, mBaseX, mBaseY, 0);
-        return mvpMatrix;
+        if (mModelMatrixInvalidated) {
+            Matrix.setIdentityM(mModelMatrix, 0);
+            Matrix.translateM(mModelMatrix, 0, mBaseX, mBaseY, 0);
+            Matrix.rotateM(mModelMatrix, 0, mAngle, 0, 0, -1.0f);
+
+            mModelMatrixInvalidated = false;
+        }
+        return mModelMatrix;
     }
 
     /**
@@ -220,8 +252,7 @@ public abstract class Shape implements ITouchL {
      * @param dy The y offset relative to its old position (pixels)
      */
     public void move(float dx, float dy) {
-        mBaseX += dx;
-        mBaseY += dy;
+        moveTo(mBaseX + dx, mBaseY + dy);
     }
 
     /**
@@ -232,6 +263,8 @@ public abstract class Shape implements ITouchL {
     public void moveTo(float newX, float newY) {
         mBaseX = newX;
         mBaseY = newY;
+
+        mModelMatrixInvalidated = true;
     }
 
     /**

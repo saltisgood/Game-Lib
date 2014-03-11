@@ -67,17 +67,17 @@ public class Quadrilateral extends Shape {
 
         float[] vertexMatrix = new float[8];
 
-        vertexMatrix[0] = getX() - (mWidth / 2.0f);
-        vertexMatrix[1] = getY() + (mHeight / 2.0f);
+        vertexMatrix[0] = mWidth / -2.0f;
+        vertexMatrix[1] = mHeight / 2.0f;
 
-        vertexMatrix[2] = getX() + (mWidth / 2.0f);
-        vertexMatrix[3] = getY() + (mHeight / 2.0f);
+        vertexMatrix[2] = mWidth / 2.0f;
+        vertexMatrix[3] = mHeight / 2.0f;
 
-        vertexMatrix[4] = getX() + (mWidth / 2.0f);
-        vertexMatrix[5] = getY() - (mHeight / 2.0f);
+        vertexMatrix[4] = mWidth / 2.0f;
+        vertexMatrix[5] = mHeight / -2.0f;
 
-        vertexMatrix[6] = getX() - (mWidth / 2.0f);
-        vertexMatrix[7] = getY() - (mHeight / 2.0f);
+        vertexMatrix[6] = mWidth / -2.0f;
+        vertexMatrix[7] = mHeight / -2.0f;
 
         mVertices.setVertices(vertexMatrix);
     }

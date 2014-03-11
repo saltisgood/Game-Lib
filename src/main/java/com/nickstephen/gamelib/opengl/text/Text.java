@@ -1,6 +1,7 @@
 package com.nickstephen.gamelib.opengl.text;
 
 import android.content.Context;
+import android.opengl.Matrix;
 
 import com.nickstephen.gamelib.opengl.Shape;
 import com.nickstephen.gamelib.opengl.SpriteHelper;
@@ -30,9 +31,11 @@ public class Text extends Shape {
 
     protected String mText = "";
     boolean mCentered = true;
+    private float[] mIdentityMatrix;
     float mScaleX = 1.0f;
     float mScaleY = 1.0f;
     float mSpaceX;
+
 
     /**
      * Default constructor.
@@ -66,6 +69,9 @@ public class Text extends Shape {
         setTextureId(TextUtil.getInstance().getTextureId());
 
         mVertices = new SpriteHelper(this);
+
+        mIdentityMatrix = new float[16];
+        Matrix.setIdentityM(mIdentityMatrix, 0);
     }
 
     /**
@@ -124,14 +130,16 @@ public class Text extends Shape {
     }
 
     /**
-     * Overriden call to draw here because the model matrix transformation has already taken place
-     * in the {@link com.nickstephen.gamelib.opengl.text.TextUtil#addTextToBatch(com.nickstephen.gamelib.opengl.SpriteHelper)}
-     * method. Could be modified later if necessary.
-     * @param vpMatrix The view/projection matrix to apply
+     * Since the model matrices are already taken care of in
+     * {@link com.nickstephen.gamelib.opengl.SpriteHelper}, simply return the identity matrix so that
+     * the multiplication in {@link #draw(float[])} is ignored.
+     * @return The identity matrix
      */
+    @NotNull
     @Override
-    public void draw(@NotNull float[] vpMatrix) {
-        mVertices.draw(vpMatrix);
+    public float[] getModelMatrix() {
+        Matrix.setIdentityM(mIdentityMatrix, 0);
+        return mIdentityMatrix;
     }
 
     /**
