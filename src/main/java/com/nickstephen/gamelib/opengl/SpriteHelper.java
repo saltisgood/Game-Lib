@@ -61,6 +61,10 @@ public class SpriteHelper extends Vertices {
         mMVPIndices = new float[mNumVertices * VERTICES_PER_SPRITE];
 
         setupIndices();
+
+        if ((mNumSprites * MAT4_SIZE) > mNumVertices * mVertexStride) {
+            mScratch = new float[mNumSprites * MAT4_SIZE];
+        }
     }
 
     /**
@@ -127,15 +131,13 @@ public class SpriteHelper extends Vertices {
      * @param vpMatrix The view/projection matrix to use when drawing
      */
     @Override
-    public void draw(@NotNull float[] vpMatrix) {
-        float[] mvpMatrices = new float[mNumSprites * MAT4_SIZE];
-
+    public synchronized void draw(@NotNull float[] vpMatrix) {
         for (int i = 0; i < mNumSprites; i++) {
-            Matrix.multiplyMM(mvpMatrices, i * MAT4_SIZE, vpMatrix, 0, mModelMatrices, i * MAT4_SIZE);
+            Matrix.multiplyMM(mScratch, i * MAT4_SIZE, vpMatrix, 0, mModelMatrices, i * MAT4_SIZE);
         }
         mNumMVPMatrices = mNumSprites;
 
-        super.draw(mvpMatrices);
+        super.draw(mScratch);
     }
 
     /**

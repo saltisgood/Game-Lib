@@ -239,7 +239,8 @@ public abstract class Shape implements ITouchL {
         if (mModelMatrixInvalidated) {
             Matrix.setIdentityM(mModelMatrix, 0);
             Matrix.translateM(mModelMatrix, 0, mBaseX, mBaseY, 0);
-            Matrix.rotateM(mModelMatrix, 0, mAngle, 0, 0, -1.0f);
+            //Matrix.rotateM(mModelMatrix, 0, mAngle, 0, 0, -1.0f);
+            GeneralUtil.rotateM(mModelMatrix, 0, mAngle, 0, 0, -1.0f);
 
             mModelMatrixInvalidated = false;
         }

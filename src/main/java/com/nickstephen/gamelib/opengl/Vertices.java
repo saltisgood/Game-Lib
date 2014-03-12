@@ -7,6 +7,7 @@ import com.nickstephen.gamelib.opengl.program.Program;
 import com.nickstephen.gamelib.opengl.program.UniformVariable;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -20,9 +21,10 @@ import java.nio.ShortBuffer;
 public class Vertices {
     public static final int MVP_MATRIX_INDEX_CNT = 1; // Number of Components in MVP matrix index
     public final static int TEXCOORD_CNT = 2;                 // Number of Components in Vertex Texture Coords
+    public final static int POSITION_CNT_2D = 2;              // Number of Components in Vertex Position for 2D
 
     private final static int INDEX_SIZE = Short.SIZE / 8;      // Index Byte Size (Short.SIZE = bits)
-    private final static int POSITION_CNT_2D = 2;              // Number of Components in Vertex Position for 2D
+
 
     protected final int mNumVertices;
     /**
@@ -33,6 +35,7 @@ public class Vertices {
     protected final boolean mUsesMVPIndex;
     protected final boolean mUsesTexture;
     protected final boolean mUsesTextureCoords;
+    protected final int mVertexStride;
 
     private final ShortBuffer mIndices;
     private final int mMVPIndexHandle;
@@ -46,13 +49,14 @@ public class Vertices {
      * Bytesize of a single vertex (stride * bytes in float)
      */
     private final int mVertexSize;
-    private final int mVertexStride;
+
     private final FloatBuffer mVertices;
 
     protected float[] mMVPIndices;
     protected int mNumMVPMatrices = 1;
     protected float[] mTexCoords;
     protected float[] mVertexCoords;
+    protected float[] mScratch;
 
     /**
      * Constructor.
@@ -99,13 +103,19 @@ public class Vertices {
         mTextureCoordinateHandle = AttrVariable.A_TexCoordinate.getHandle();
         mMVPIndexHandle = AttrVariable.A_MVPMatrixIndex.getHandle();
         mPositionHandle = AttrVariable.A_Position.getHandle();
+
+        if (mUsesTextureCoords) {
+            mTexCoords = new float[TEXCOORD_CNT * mNumVertices];
+        }
+
+        mScratch = new float[mNumVertices * mVertexStride];
     }
 
     /**
      * Perform the setups prior to drawing.
      * @param mvpMatrix The full MVP matrix to use
      */
-    private void bind(@NotNull float[] mvpMatrix) {
+    private synchronized void bind(@NotNull float[] mvpMatrix) {
         GLES20.glUseProgram(mProgram.getHandle());
 
         int mvpMatricesHandle = GLES20.glGetUniformLocation(mProgram.getHandle(), UniformVariable.U_MVPMatrix.getName());
@@ -158,10 +168,12 @@ public class Vertices {
         bind(mvpMatrix);
 
         if (mIndices != null)  {                       // IF Indices Exist
-            mIndices.position(0);                  // Set Index Buffer to Specified Offset
-            //draw indexed
-            GLES20.glDrawElements(mPrimitiveType, mNumIndices,
-                    GLES20.GL_UNSIGNED_SHORT, mIndices);
+            synchronized (mIndices) {
+                mIndices.position(0);                  // Set Index Buffer to Specified Offset
+                //draw indexed
+                GLES20.glDrawElements(mPrimitiveType, mNumIndices,
+                        GLES20.GL_UNSIGNED_SHORT, mIndices);
+            }
         }
         else  {                                         // ELSE No Indices Exist
             //draw direct
@@ -178,9 +190,11 @@ public class Vertices {
      * @param length Number of indices in array
      */
     public void setIndices(@NotNull short[] indices, int offset, int length) {
-        mIndices.clear();
-        mIndices.put(indices, offset, length);
-        mIndices.flip();
+        synchronized (mIndices) {
+            mIndices.clear();
+            mIndices.put(indices, offset, length);
+            mIndices.flip();
+        }
     }
 
     /**
@@ -202,29 +216,30 @@ public class Vertices {
      * float buffer actually used for OpenGL calls. Make sure to call before drawing when the
      * shape's properties change.
      */
-    protected void resetFloatBuffer() {
-        int len = mNumVertices * mVertexStride;
-        float[] buff = new float[len];
-
-        for (int c = 0, i = 0, j = 0, k = 0; i < len; c++) {
+    public synchronized void resetFloatBuffer() {
+        for (int c = 0, i = 0, j = 0, k = 0; i < mNumVertices * mVertexStride; c++) {
             for (; j < (c + 1) * mPositionCount;) {
-                buff[i++] = mVertexCoords[j++];
+                mScratch[i++] = mVertexCoords[j++];
             }
 
             if (mUsesTextureCoords) {
                 for (; k < (c + 1) * TEXCOORD_CNT ;) {
-                    buff[i++] = mTexCoords[k++];
+                    mScratch[i++] = mTexCoords[k++];
                 }
             }
 
             if (mUsesMVPIndex) {
-                buff[i++] = mMVPIndices[c];
+                mScratch[i++] = mMVPIndices[c];
             }
         }
 
         mVertices.clear();
-        mVertices.put(buff, 0, len);
+        mVertices.put(mScratch, 0, mNumVertices * mVertexStride);
         mVertices.flip();
+    }
+
+    public @NotNull float[] getTextureCoords() {
+        return mTexCoords;
     }
 
     /**

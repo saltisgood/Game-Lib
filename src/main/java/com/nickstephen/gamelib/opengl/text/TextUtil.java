@@ -109,6 +109,7 @@ class TextUtil {
     private int mTextureId;
     private int mTextureSize;
     private int mTextureUniformHandle;
+    private float[] mScratch = new float[16];
 
     /**
      * Constructor.
@@ -248,9 +249,8 @@ class TextUtil {
         }
 
         // create a model matrix based on x, y and angleDeg
-        float[] modelMatrix = new float[16];
-        Matrix.setIdentityM(modelMatrix, 0);
-        Matrix.translateM(modelMatrix, 0, x, y, 0);
+        Matrix.setIdentityM(mScratch, 0);
+        Matrix.translateM(mScratch, 0, x, y, 0);
 
         float letterX, letterY;
         letterX = letterY = 0;
@@ -259,7 +259,7 @@ class TextUtil {
             int c = (int)text.charAt(i) - CHAR_START;  // Calculate Character Index (Offset by First Char in Font)
             if (c < 0 || c >= CHAR_CNT)                // IF Character Not In Font
                 c = CHAR_UNKNOWN;                         // Set to Unknown Character Index
-            spriteHelper.addSpriteToBatch(letterX, letterY, chrWidth, chrHeight, mCharRegion[c], modelMatrix);
+            spriteHelper.addSpriteToBatch(letterX, letterY, chrWidth, chrHeight, mCharRegion[c], mScratch);
             letterX += (mCharWidths[c] + mTextObj.mSpaceX) * mTextObj.mScaleX;    // Advance X Position by Scaled Character Width
         }
     }

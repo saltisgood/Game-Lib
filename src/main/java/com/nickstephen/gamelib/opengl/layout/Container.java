@@ -161,17 +161,22 @@ public class Container extends Quadrilateral {
 
         Matrix.translateM(mScratch, 0, viewMatrix, 0, this.getX() + mParentOffsetX, this.getY() + mParentOffsetY, 0);
 
-        for (Container c : mChildContainers) {
-            c.draw(projMatrix, mScratch);
+        int len = mChildContainers.size();
+        //noinspection ForLoopReplaceableByForEach
+        for (int i = 0; i < len; i++) {
+            mChildContainers.get(i).draw(projMatrix, mScratch);
         }
 
         Matrix.multiplyMM(mVPMatrix, 0, projMatrix, 0, mScratch, 0);
 
         GLES20.glEnable(GLES20.GL_SCISSOR_TEST);
         GLES20.glScissor(getAbsoluteBLCornerX(), getAbsoluteBLCornerY(), (int) mScreenWidth, (int) mScreenHeight);
-        for (Shape shape : mChildren) {
-            shape.draw(mVPMatrix);
+
+        len = mChildren.size();
+        for (int i = 0; i < len; i++) {
+            mChildren.get(i).draw(mVPMatrix);
         }
+
         GLES20.glDisable(GLES20.GL_SCISSOR_TEST);
     }
 
@@ -463,10 +468,7 @@ public class Container extends Quadrilateral {
             return false;
         }
 
-        if ((Math.abs(-posX + mParentOffsetX) - (mScreenWidth / 2.0f)) > touchSlop) {
-            return false;
-        }
+        return (Math.abs(-posX + mParentOffsetX) - (mScreenWidth / 2.0f)) <= touchSlop;
 
-        return true;
     }
 }

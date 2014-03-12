@@ -20,6 +20,8 @@ import org.jetbrains.annotations.Nullable;
  * @author Nick Stephen
  */
 public class Quadrilateral extends Shape {
+    public static final int NUM_SIDES = 4;
+
     private float mHeight;
     private float mWidth;
 
@@ -38,9 +40,10 @@ public class Quadrilateral extends Shape {
         mWidth = width;
         mHeight = height;
 
-        mVertices = new Vertices(this, 4, 0, GLES20.GL_LINE_LOOP);
-
         this.moveTo(x, y);
+
+        setupVertices();
+        setVertices();
     }
 
     public Quadrilateral(@NotNull Context context, @Nullable Container parent, @NotNull Program program,
@@ -50,36 +53,10 @@ public class Quadrilateral extends Shape {
         mWidth = width;
         mHeight = height;
 
-        mVertices = new Vertices(this, 4, 0, GLES20.GL_LINE_LOOP);
-
         this.moveTo(x, y);
-    }
 
-    /**
-     * Move the quad and set the new vertices. Extensions to this class should override this method
-     * if they provide their own drawing mechanism.
-     * @param newX The new x position
-     * @param newY The new y position
-     */
-    @Override
-    public void moveTo(float newX, float newY) {
-        super.moveTo(newX, newY);
-
-        float[] vertexMatrix = new float[8];
-
-        vertexMatrix[0] = mWidth / -2.0f;
-        vertexMatrix[1] = mHeight / 2.0f;
-
-        vertexMatrix[2] = mWidth / 2.0f;
-        vertexMatrix[3] = mHeight / 2.0f;
-
-        vertexMatrix[4] = mWidth / 2.0f;
-        vertexMatrix[5] = mHeight / -2.0f;
-
-        vertexMatrix[6] = mWidth / -2.0f;
-        vertexMatrix[7] = mHeight / -2.0f;
-
-        mVertices.setVertices(vertexMatrix);
+        setupVertices();
+        setVertices();
     }
 
     /**
@@ -100,5 +77,25 @@ public class Quadrilateral extends Shape {
         return true;
     }
 
+    protected void setupVertices() {
+        mVertices = new Vertices(this, NUM_SIDES, 0, GLES20.GL_LINE_LOOP);
+    }
 
+    protected void setVertices() {
+        float[] vertexMatrix = new float[NUM_SIDES * Vertices.POSITION_CNT_2D];
+
+        vertexMatrix[0] = mWidth / -2.0f;
+        vertexMatrix[1] = mHeight / 2.0f;
+
+        vertexMatrix[2] = mWidth / 2.0f;
+        vertexMatrix[3] = mHeight / 2.0f;
+
+        vertexMatrix[4] = mWidth / 2.0f;
+        vertexMatrix[5] = mHeight / -2.0f;
+
+        vertexMatrix[6] = mWidth / -2.0f;
+        vertexMatrix[7] = mHeight / -2.0f;
+
+        mVertices.setVertices(vertexMatrix);
+    }
 }

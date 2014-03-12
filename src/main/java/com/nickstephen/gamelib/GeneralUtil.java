@@ -1,6 +1,7 @@
 package com.nickstephen.gamelib;
 
 import android.content.Context;
+import android.opengl.Matrix;
 import android.os.Vibrator;
 
 import org.jetbrains.annotations.NotNull;
@@ -10,6 +11,8 @@ import org.jetbrains.annotations.NotNull;
  * @author Nick Stephen
  */
 public final class GeneralUtil {
+    private static final float[] sTemp = new float[32];
+
     private GeneralUtil() {} // Don't call!
 
     private static Vibrator sVibrator;
@@ -27,6 +30,30 @@ public final class GeneralUtil {
         }
 
         return ave;
+    }
+
+    /**
+     * <p>Rotates matrix m in place by angle a (in degrees)
+     * around the axis (x, y, z).</p>
+     *
+     * <p>Note: This is identical to the version in Kit-Kat's opengl.Matrix class. The reason
+     * it's copied here is because on certain versions of Android it allocates a new matrix on every
+     * call, which can lead to expensive GC calls.</p>
+     *
+     * @param m source matrix
+     * @param mOffset index into m where the matrix starts
+     * @param a angle to rotate in degrees
+     * @param x X axis component
+     * @param y Y axis component
+     * @param z Z axis component
+     */
+    public static void rotateM(float[] m, int mOffset,
+                               float a, float x, float y, float z) {
+        synchronized(sTemp) {
+            Matrix.setRotateM(sTemp, 0, a, x, y, z);
+            Matrix.multiplyMM(sTemp, 16, m, mOffset, sTemp, 0);
+            System.arraycopy(sTemp, 16, m, mOffset, 16);
+        }
     }
 
     /**
