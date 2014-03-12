@@ -5,12 +5,21 @@ import com.nickstephen.gamelib.opengl.Shape;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Created by Nick Stephen on 12/03/14.
+ * An animation implementation that moves a shape across the screen.
+ * @author Nick Stephen
  */
 public class TranslationAnimation extends Animation {
     protected float mStartX, mStartY;
     protected float mEndX, mEndY;
 
+    /**
+     * Constructor.
+     * @param shape The shape to animate
+     * @param startX The starting x position of the shape
+     * @param startY The starting y position of the shape
+     * @param endX The end x position of the shape
+     * @param endY The end y position of the shape
+     */
     public TranslationAnimation(@NotNull Shape shape, float startX, float startY, float endX, float endY) {
         super(shape);
 

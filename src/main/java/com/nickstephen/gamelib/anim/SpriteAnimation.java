@@ -5,11 +5,16 @@ import com.nickstephen.gamelib.opengl.AnimatedSprite;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Created by Nick Stephen on 12/03/14.
+ * An animation extension used for animating sprites.
+ * @author Nick Stephen
  */
 public class SpriteAnimation extends Animation {
     protected final int mNumFrames;
 
+    /**
+     * Constructor.
+     * @param shape The sprite to animate
+     */
     public SpriteAnimation(@NotNull AnimatedSprite shape) {
         super(shape);
 

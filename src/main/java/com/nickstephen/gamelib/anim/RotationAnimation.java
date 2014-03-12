@@ -5,12 +5,21 @@ import com.nickstephen.gamelib.opengl.Shape;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Created by Nick Stephen on 12/03/14.
+ * Perform a rotation animation on a shape. Pretty much as it sounds it just turns the shape around
+ * as looking at it on the screen. The only caveat is that if you want it to do a complete revolution
+ * you should add 360 to the end angle.
+ * @author Nick Stephen
  */
 public class RotationAnimation extends Animation {
     protected float mStartAngle;
     protected float mEndAngle;
 
+    /**
+     * Constructor.
+     * @param shape The shape to animate
+     * @param startAngle The angle to start at (degrees)
+     * @param endAngle The angle to finish at (degrees)
+     */
     public RotationAnimation(@NotNull Shape shape, float startAngle, float endAngle) {
         super(shape);
 
