@@ -1,18 +1,19 @@
 package com.nickstephen.gamelib.run;
 
-import android.os.Build;
-import android.os.Handler;
-import android.os.HandlerThread;
-import android.os.Message;
+import com.nickstephen.gamelib.anim.Animation;
+import com.nickstephen.lib.Twig;
+
+import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by Nick Stephen on 12/03/14.
  */
-public class GameLoop extends HandlerThread implements Handler.Callback {
-    public static final int MSG_START = 0x10;
-    public static final int MSG_QUITSAFE = 0x100;
-
-    private static final String TAG = "GameLoop";
+public class GameLoop implements Runnable {
+    public static final long[] HZ_60 = new long[] { 16, 17, 17 };
+    public static final long[] HZ_80 = new long[] { 12, 13 };
 
     protected static GameLoop sInstance;
 
@@ -20,63 +21,101 @@ public class GameLoop extends HandlerThread implements Handler.Callback {
         return sInstance;
     }
 
-    private Handler mGuiHandler;
-    private Handler mGameHandler;
+    private long[] mUpdateHzArray;
+    private int mUpdateHzIndex;
+    private boolean mStop = false;
+    private int mTicks;
+    private List<Animation> mAnimations;
+    private boolean mPause = true;
 
-    public GameLoop(Handler guiHandler) {
-        super(TAG);
-
-        mGuiHandler = guiHandler;
+    protected GameLoop(@NotNull long[] updateHz) {
+        mUpdateHzArray = updateHz;
+        mAnimations = new ArrayList<Animation>();
     }
 
     @Override
-    protected void onLooperPrepared() {
-        mGameHandler = new Handler(this);
-    }
+    public void run() {
+        long nextUpdate = System.currentTimeMillis();
 
-    @Override
-    public boolean handleMessage(Message msg) {
-        switch (msg.what) {
-            case MSG_START:
-                break;
-            case MSG_QUITSAFE:
-                quitSafely();
-                break;
+        while (!mStop) {
+            if (mPause) {
+                try {
+                    Thread.sleep(125);
+                } catch (InterruptedException e) {
+                    Twig.printStackTrace(e);
+                }
+                continue;
+            }
+
+            long now = System.currentTimeMillis();
+
+            if (now < nextUpdate) {
+                try {
+                    Thread.sleep(1);
+                } catch (InterruptedException e) {
+                    Twig.printStackTrace(e);
+                }
+                continue;
+            }
+
+            tick(now);
+
+            long post = System.currentTimeMillis();
+            long update = updateInterval();
+
+            if ((post - now) >= update) {
+                Twig.debug("GameLoop", "Tick " + mTicks + " took longer than update interval");
+            }
+
+            nextUpdate += update;
+            mTicks++;
         }
-        return false;
+
+        onExit();
     }
 
-    @Override
-    public boolean quit() {
-        sInstance = null;
-
-        return super.quit();
+    protected void tick(long now) {
+        updateGameLogic();
+        updateAnimations(now);
     }
 
-    @Override
-    public boolean quitSafely() {
-        if (Build.VERSION.SDK_INT >= 18) {
-            sInstance = null;
+    protected void updateGameLogic() {
 
-            return super.quitSafely();
-        } else {
-            return quit();
+    }
+
+    protected void updateAnimations(long now) {
+        for (int i = 0; i < mAnimations.size(); i++) {
+            Animation a = mAnimations.get(i);
+
+            a.onUpdate(now);
+            if (a.shouldFinish(now)) {
+                mAnimations.remove(a);
+                i--;
+            }
         }
     }
 
-    public Handler getGuiHandler() {
-        return mGuiHandler;
+    protected void onExit() {
+
     }
 
-    public Handler getGameHandler() {
-        return mGameHandler;
+    public final void addAnimation(Animation anim) {
+        mAnimations.add(anim);
     }
 
-    public boolean postGameRunnable(Runnable action) {
-        return mGameHandler.post(action);
+    private long updateInterval() {
+        return mUpdateHzArray[mUpdateHzIndex++ % mUpdateHzArray.length];
     }
 
-    public boolean sendGameMessage(int what) {
-        return mGameHandler.sendEmptyMessage(what);
+    public void pause() {
+        mPause = true;
+    }
+
+    public void resume() {
+        mPause = false;
+    }
+
+    public void stop() {
+        mStop = true;
     }
 }
