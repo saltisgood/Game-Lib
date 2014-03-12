@@ -107,4 +107,8 @@ public class Renderer implements GLSurfaceView.Renderer {
     public boolean onTouchEvent(MotionEvent e) {
         return mContentContainer.onTouchEvent(e);
     }
+
+    public void setContent(RootContainer root) {
+        mContentContainer = root;
+    }
 }

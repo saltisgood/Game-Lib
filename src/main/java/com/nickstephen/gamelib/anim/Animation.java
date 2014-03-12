@@ -35,6 +35,7 @@ public abstract class Animation {
     protected LoopStyle mOnLoopStyle = LoopStyle.RESTART;
 
     private boolean mForwardAnim = true;
+    private IOnAnimationEnd mOnAnimationEndL;
 
     /**
      * Construct the animation and associate it with a shape.
@@ -42,6 +43,10 @@ public abstract class Animation {
      */
     public Animation(@NotNull Shape shape) {
         mShape = shape;
+    }
+
+    public void setAnimationEndListener(IOnAnimationEnd listener) {
+        mOnAnimationEndL = listener;
     }
 
     /**
@@ -210,6 +215,10 @@ public abstract class Animation {
      */
     public void onFinish(long now) {
         mIsRunning = false;
+
+        if (mOnAnimationEndL != null) {
+            mOnAnimationEndL.onAnimationEnd(mShape);
+        }
     }
 
     /**

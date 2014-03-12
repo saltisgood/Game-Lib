@@ -8,7 +8,8 @@ public class SpriteProgram extends Program {
             AttrVariable.A_Position, AttrVariable.A_TexCoordinate
     };
 
-    private static final UniformVariable[] uniVariables = { UniformVariable.U_MVPMatrix, UniformVariable.U_Texture };
+    private static final UniformVariable[] uniVariables = { UniformVariable.U_MVPMatrix, UniformVariable.U_Texture,
+            UniformVariable.U_Alpha };
 
     private static final String vertexShaderCode =
             "uniform mat4 u_MVPMatrix;      \n"     // An array representing the combined
@@ -31,10 +32,11 @@ public class SpriteProgram extends Program {
                     +	"precision mediump float;       \n"     // Set the default precision to medium. We don't need as high of a
                     // precision in the fragment shader.
                     + "varying vec2 v_TexCoordinate;  \n" // Interpolated texture coordinate per fragment.
+                    + "uniform float u_Alpha;"
 
                     + "void main()                    \n"     // The entry point for our fragment shader.
                     + "{                              \n"
-                    + "   gl_FragColor = texture2D(u_Texture, v_TexCoordinate);\n" // texture is grayscale so take only grayscale value from
+                    + "   gl_FragColor = texture2D(u_Texture, v_TexCoordinate) * u_Alpha;\n" // texture is grayscale so take only grayscale value from
                     // it when computing color output (otherwise font is always black)
                     + "}                             \n";
 

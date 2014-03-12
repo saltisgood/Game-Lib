@@ -11,7 +11,8 @@ public class BatchTextProgram extends Program {
             AttrVariable.A_Position, AttrVariable.A_TexCoordinate, AttrVariable.A_MVPMatrixIndex,
     };
 
-    private static final UniformVariable[] uniVariables = { UniformVariable.U_MVPMatrix, UniformVariable.U_Texture, UniformVariable.U_Colour };
+    private static final UniformVariable[] uniVariables = { UniformVariable.U_MVPMatrix, UniformVariable.U_Texture, UniformVariable.U_Colour,
+            UniformVariable.U_Alpha };
 
     private static final String vertexShaderCode =
             "uniform mat4 u_MVPMatrix[24];      \n"     // An array representing the combined
@@ -37,10 +38,11 @@ public class BatchTextProgram extends Program {
                     // precision in the fragment shader.
                     + "uniform vec4 u_Color;          \n"
                     + "varying vec2 v_TexCoordinate;  \n" // Interpolated texture coordinate per fragment.
+                    + "uniform float u_Alpha;"
 
                     + "void main()                    \n"     // The entry point for our fragment shader.
                     + "{                              \n"
-                    + "   gl_FragColor = texture2D(u_Texture, v_TexCoordinate).w * u_Color;\n" // texture is grayscale so take only grayscale value from
+                    + "   gl_FragColor = texture2D(u_Texture, v_TexCoordinate).w * u_Color * u_Alpha;\n" // texture is grayscale so take only grayscale value from
                     // it when computing color output (otherwise font is always black)
                     + "}                             \n";
 

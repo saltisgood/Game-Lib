@@ -43,6 +43,7 @@ public abstract class Shape implements ITouchL {
     protected float[] mColour = new float[4];
     protected Vertices mVertices;
 
+    private float mAlpha = 1.0f;
     private float mAngle;
     /**
      * The baseline X position relative to the container
@@ -121,6 +122,14 @@ public abstract class Shape implements ITouchL {
         if (parent != null) {
             mSurface = parent.getSurface();
         }
+    }
+
+    public float getAlpha() {
+        return mAlpha;
+    }
+
+    public void setAlpha(float alpha) {
+        mAlpha = alpha;
     }
 
     /**

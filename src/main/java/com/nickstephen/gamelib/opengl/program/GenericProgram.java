@@ -7,7 +7,7 @@ package com.nickstephen.gamelib.opengl.program;
  */
 public class GenericProgram extends Program {
     private static final AttrVariable[] attrVariables = { AttrVariable.A_Position };
-    private static final UniformVariable[] uniVariables = { UniformVariable.U_Colour, UniformVariable.U_MVPMatrix };
+    private static final UniformVariable[] uniVariables = { UniformVariable.U_Colour, UniformVariable.U_MVPMatrix, UniformVariable.U_Alpha };
 
     private static final String mVertexShaderCode =
             // This matrix member variable provides a hook to manipulate
@@ -24,8 +24,10 @@ public class GenericProgram extends Program {
     private static final String mFragmentShaderCode =
             "precision mediump float;" +
                     "uniform vec4 u_Color;" +
+                    "uniform float u_Alpha;" +
                     "void main() {" +
-                    "  gl_FragColor = u_Color;" +
+                    "  gl_FragColor = u_Color * u_Alpha;" +
+                    //"  gl_FragColor.a = u_Alpha;" +
                     "}";
 
     @Override

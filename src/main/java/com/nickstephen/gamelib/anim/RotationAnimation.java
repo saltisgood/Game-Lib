@@ -38,13 +38,6 @@ public class RotationAnimation extends Animation {
     }
 
     @Override
-    public void onLoop() {
-        super.onLoop();
-
-        mShape.setAngle(mStartAngle);
-    }
-
-    @Override
     public void onFinish(long now) {
         if (mRevertOnFinish) {
             mShape.setAngle(mStartAngle);

@@ -32,6 +32,7 @@ public class Vertices {
      */
     protected final int mPositionCount;
     protected final Program mProgram;
+    protected final boolean mUsesAlpha;
     protected final boolean mUsesMVPIndex;
     protected final boolean mUsesTexture;
     protected final boolean mUsesTextureCoords;
@@ -77,6 +78,7 @@ public class Vertices {
         mUsesTexture = mProgram.usesVariable(UniformVariable.U_Texture);
         mUsesTextureCoords = mProgram.usesVariable(AttrVariable.A_TexCoordinate);
         mUsesMVPIndex = mProgram.usesVariable(AttrVariable.A_MVPMatrixIndex);
+        mUsesAlpha = mProgram.usesVariable(UniformVariable.U_Alpha);
 
         mVertexStride = mPositionCount +
                 (mUsesMVPIndex ? MVP_MATRIX_INDEX_CNT : 0) +
@@ -150,6 +152,11 @@ public class Vertices {
             mVertices.position(mPositionCount + TEXCOORD_CNT);
         } else {
             mVertices.position(mPositionCount);
+        }
+
+        if (mUsesAlpha) {
+            int alphaHandle = GLES20.glGetUniformLocation(mProgram.getHandle(), UniformVariable.U_Alpha.getName());
+            GLES20.glUniform1f(alphaHandle, mShape.getAlpha());
         }
 
         // bind MVP Matrix index position handle

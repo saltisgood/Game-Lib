@@ -100,10 +100,12 @@ public class Utilities {
             // add the source code to the shader and compile it
             GLES20.glShaderSource(shaderHandle, shaderCode);
             GLES20.glCompileShader(shaderHandle);
+            checkGlError("glCompileShader");
 
             // Get the compilation status.
             final int[] compileStatus = new int[1];
             GLES20.glGetShaderiv(shaderHandle, GLES20.GL_COMPILE_STATUS, compileStatus, 0);
+            checkGlError("glGetShaderiv");
 
             // If the compilation failed, delete the shader.
             if (compileStatus[0] == 0)
