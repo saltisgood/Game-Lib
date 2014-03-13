@@ -28,8 +28,8 @@ public class RootContainer extends Container {
      * @param fontFile The filename of the font file to be used to initialise the
      *                 {@link com.nickstephen.gamelib.opengl.text.TextUtil} instance
      */
-    public RootContainer(@NotNull Context context, @NotNull GLSurfaceView surface, float width, float height, float parentOffsetX, float parentOffsetY, String fontFile) {
-        this(context, surface, width, height, parentOffsetX, parentOffsetY);
+    public RootContainer(@NotNull Context context, @NotNull GLSurfaceView surface, float width, float height, String fontFile) {
+        this(context, surface, width, height);
 
         if (!VersionControl.IS_RELEASE) {
             FPSMeter fps = new FPSMeter(context, this, fontFile);
@@ -47,8 +47,8 @@ public class RootContainer extends Container {
      * @param parentOffsetX The offset of the container from its parent (x-axis)
      * @param parentOffsetY The offset of the container from its parent (y-axis)
      */
-    public RootContainer(@NotNull Context context, @NotNull GLSurfaceView surface, float width, float height, float parentOffsetX, float parentOffsetY) {
-        super(context, null, width, height, parentOffsetX, parentOffsetY);
+    public RootContainer(@NotNull Context context, @NotNull GLSurfaceView surface, float width, float height) {
+        super(context, null, width, height, 0, 0);
 
         this.setSurface(surface);
     }

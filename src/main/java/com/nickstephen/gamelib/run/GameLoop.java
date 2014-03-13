@@ -1,6 +1,9 @@
 package com.nickstephen.gamelib.run;
 
+import android.os.Handler;
+
 import com.nickstephen.gamelib.anim.Animation;
+import com.nickstephen.gamelib.opengl.Shape;
 import com.nickstephen.lib.Twig;
 
 import org.jetbrains.annotations.NotNull;
@@ -39,6 +42,7 @@ public class GameLoop implements Runnable {
     private List<Animation> mAnimations;
     private boolean mPause = true;
     private boolean mIsAlive = false;
+    private Handler mHandler;
 
     /**
      * Construct the GameLoop (doesn't start it).
@@ -47,6 +51,7 @@ public class GameLoop implements Runnable {
     protected GameLoop(@NotNull long[] updateHz) {
         mUpdateHzArray = updateHz;
         mAnimations = new ArrayList<Animation>();
+        mHandler = new Handler();
     }
 
     @Override
@@ -187,5 +192,32 @@ public class GameLoop implements Runnable {
      */
     public boolean isRunning() {
         return !mPause;
+    }
+
+    public void cancelAnimations(boolean graceful) {
+        long now = System.currentTimeMillis();
+
+        if (graceful) {
+            int len = mAnimations.size();
+            for (int i = 0; i < len; i++) {
+                mAnimations.get(i).onFinish(now);
+            }
+        }
+        mAnimations.clear();
+    }
+
+    public Handler getMainThreadHandler() {
+        return mHandler;
+    }
+
+    public void removeAnimationsOfShape(Shape shape) {
+        int len = mAnimations.size();
+        for (int i = 0; i < len; i++) {
+            if (mAnimations.get(i).getShape() == shape) {
+                mAnimations.remove(i);
+                len = mAnimations.size();
+                i--;
+            }
+        }
     }
 }

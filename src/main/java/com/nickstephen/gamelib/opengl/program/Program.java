@@ -32,6 +32,7 @@ public abstract class Program {
         GLES20.glDeleteShader(mVertexShaderHandle);
         GLES20.glDeleteShader(mFragmentShaderHandle);
         GLES20.glDeleteProgram(mProgramHandle);
+        Utilities.checkGlError("glDeleteShader/Program");
         mInitialized = false;
     }
 

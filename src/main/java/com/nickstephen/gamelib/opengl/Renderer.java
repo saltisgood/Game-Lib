@@ -29,6 +29,7 @@ public class Renderer implements GLSurfaceView.Renderer {
     private float[] mBaseViewMatrix = new float[16];
     private float[] mProjMatrix = new float[16];
     private float[] mVPMatrix = new float[16];
+    private int mWidth, mHeight;
 
     /**
      * Constructor.
@@ -53,8 +54,12 @@ public class Renderer implements GLSurfaceView.Renderer {
 
         Matrix.multiplyMM(mVPMatrix, 0, mProjMatrix, 0, mBaseViewMatrix, 0);
 
+        onDraw(mProjMatrix, mBaseViewMatrix);
+    }
+
+    public void onDraw(float[] projMatrix, float[] viewMatrix) {
         if (mContentContainer != null) {
-            mContentContainer.draw(mProjMatrix, mBaseViewMatrix);
+            mContentContainer.draw(projMatrix, viewMatrix);
         }
     }
 
@@ -67,6 +72,10 @@ public class Renderer implements GLSurfaceView.Renderer {
     @Override
     public void onSurfaceChanged(GL10 gl, int width, int height) {
         GLES20.glViewport(0, 0, width, height);
+
+        mWidth = width;
+        mHeight = height;
+
         float ratio = (float) width / height;
 
         // Take into account device orientation
@@ -110,5 +119,26 @@ public class Renderer implements GLSurfaceView.Renderer {
 
     public void setContent(RootContainer root) {
         mContentContainer = root;
+    }
+
+    public int getWidth() {
+        return mWidth;
+    }
+
+    public int getHeight() {
+        return mHeight;
+    }
+
+    public void onDestroy() {
+        if (mContentContainer != null) {
+            final Shape shape = mContentContainer;
+            mSurface.queueEvent(new Runnable() {
+                @Override
+                public void run() {
+                    shape.destroy();
+                }
+            });
+            mContentContainer = null;
+        }
     }
 }

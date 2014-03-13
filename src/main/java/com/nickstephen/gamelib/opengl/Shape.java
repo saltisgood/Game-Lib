@@ -210,6 +210,14 @@ public abstract class Shape implements ITouchL {
     }
 
     /**
+     * Implement this to release any OpenGL resources that have been created in using this object.
+     * <strong>Don't release shared resources or you'll get crashes!</strong>
+     */
+    public void destroy() {
+        mProgram.delete();
+    }
+
+    /**
      * The default drawing method for shapes. Takes the model matrix from {@link #getModelMatrix()}
      * and uses it to multiply the argument vpMatrix to get the mvpMatrix which is then passed to
      * {@link #mVertices#draw(float[])}.

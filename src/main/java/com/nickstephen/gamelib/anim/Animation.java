@@ -45,8 +45,9 @@ public abstract class Animation {
         mShape = shape;
     }
 
-    public void setAnimationEndListener(IOnAnimationEnd listener) {
+    public Animation setAnimationEndListener(IOnAnimationEnd listener) {
         mOnAnimationEndL = listener;
+        return this;
     }
 
     /**
@@ -260,6 +261,10 @@ public abstract class Animation {
             return true;
         }
         return false;
+    }
+
+    public @NotNull Shape getShape() {
+        return mShape;
     }
 
     /**

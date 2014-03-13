@@ -471,4 +471,36 @@ public class Container extends Quadrilateral {
         return (Math.abs(-posX + mParentOffsetX) - (mScreenWidth / 2.0f)) <= touchSlop;
 
     }
+
+    @Override
+    public void setAlpha(float alpha) {
+        super.setAlpha(alpha);
+
+        int len = mChildren.size();
+        for (int i = 0; i < len; i++) {
+            mChildren.get(i).setAlpha(alpha);
+        }
+
+        len = mChildContainers.size();
+        for (int i = 0; i < len; i++) {
+            mChildContainers.get(i).setAlpha(alpha);
+        }
+    }
+
+    public List<Shape> getChildren() {
+        return mChildren;
+    }
+
+    @Override
+    public void destroy() {
+        super.destroy();
+
+        for (Shape c : mChildren) {
+            c.destroy();
+        }
+
+        for (Container c : mChildContainers) {
+            c.destroy();
+        }
+    }
 }
