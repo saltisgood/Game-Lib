@@ -133,7 +133,7 @@ public class Vertices {
         if (mUsesColour) {
             int colourHandle = GLES20.glGetUniformLocation(mProgram.getHandle(), UniformVariable.U_Colour.getName());
             GLES20.glUniform4fv(colourHandle, 1, mShape.getColour(), 0);
-            GLES20.glEnableVertexAttribArray(colourHandle);
+            //GLES20.glEnableVertexAttribArray(colourHandle);
         }
 
         if (mUsesTexture) {
