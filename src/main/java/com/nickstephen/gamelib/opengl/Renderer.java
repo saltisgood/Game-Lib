@@ -6,6 +6,7 @@ import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
 import android.view.MotionEvent;
 import com.nickstephen.gamelib.opengl.layout.RootContainer;
+import com.nickstephen.gamelib.run.Game;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -24,8 +25,8 @@ import javax.microedition.khronos.opengles.GL10;
  */
 public class Renderer implements GLSurfaceView.Renderer {
     protected final Context mContext;
-    protected RootContainer mContentContainer;
     protected GLSurfaceView mSurface;
+
     private float[] mBaseViewMatrix = new float[16];
     private float[] mProjMatrix = new float[16];
     private float[] mVPMatrix = new float[16];
@@ -36,9 +37,11 @@ public class Renderer implements GLSurfaceView.Renderer {
      * @param context A context
      * @param surface The surface to which the renderer is (going) to be attached
      */
-    public Renderer(@NotNull Context context, @NotNull GLSurfaceView surface) {
+    public Renderer(@NotNull Context context, @NotNull OpenGLSurfaceView surface) {
         mContext = context;
         mSurface = surface;
+
+        Game.getInstanceUnsafe().setSurface(surface);
     }
 
     /**
@@ -58,8 +61,18 @@ public class Renderer implements GLSurfaceView.Renderer {
     }
 
     public void onDraw(float[] projMatrix, float[] viewMatrix) {
-        if (mContentContainer != null) {
-            mContentContainer.draw(projMatrix, viewMatrix);
+        {
+            Runnable action;
+            if ((action = Game.getInstanceUnsafe().getGLThreadAction()) != null) {
+                action.run();
+            }
+        }
+
+        synchronized (Game.getInstanceUnsafe()) {
+            RootContainer root = Game.getInstanceUnsafe().getActiveView();
+            if (root != null) {
+                root.draw(projMatrix, viewMatrix);
+            }
         }
     }
 
@@ -71,6 +84,8 @@ public class Renderer implements GLSurfaceView.Renderer {
      */
     @Override
     public void onSurfaceChanged(GL10 gl, int width, int height) {
+        Game.getInstanceUnsafe().setup(width, height);
+
         GLES20.glViewport(0, 0, width, height);
 
         mWidth = width;
@@ -108,19 +123,6 @@ public class Renderer implements GLSurfaceView.Renderer {
         GLES20.glBlendFunc(GLES20.GL_ONE, GLES20.GL_ONE_MINUS_SRC_ALPHA);
     }
 
-    /**
-     * Method for passing the surface's touch event on to the GL content
-     * @param e The motion event
-     * @return True if the event was consumed, false otherwise
-     */
-    public boolean onTouchEvent(MotionEvent e) {
-        return mContentContainer.onTouchEvent(e);
-    }
-
-    public void setContent(RootContainer root) {
-        mContentContainer = root;
-    }
-
     public int getWidth() {
         return mWidth;
     }
@@ -130,7 +132,8 @@ public class Renderer implements GLSurfaceView.Renderer {
     }
 
     public void onDestroy() {
-        if (mContentContainer != null) {
+        Game.getInstanceUnsafe().destroy();
+        /* if (mContentContainer != null) {
             final Shape shape = mContentContainer;
             mSurface.queueEvent(new Runnable() {
                 @Override
@@ -139,6 +142,6 @@ public class Renderer implements GLSurfaceView.Renderer {
                 }
             });
             mContentContainer = null;
-        }
+        } */
     }
 }

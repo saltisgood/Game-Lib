@@ -2,8 +2,10 @@ package com.nickstephen.gamelib.opengl;
 
 import android.content.Context;
 import android.opengl.GLSurfaceView;
+import android.support.v4.view.GestureDetectorCompat;
 import android.view.MotionEvent;
 
+import com.nickstephen.gamelib.opengl.gestures.GestureControl;
 import com.nickstephen.gamelib.opengl.text.Text;
 
 import org.jetbrains.annotations.NotNull;
@@ -25,6 +27,8 @@ public class OpenGLSurfaceView extends GLSurfaceView {
     protected final Context mContext;
     protected com.nickstephen.gamelib.opengl.Renderer mRenderer;
 
+    private final GestureDetectorCompat mGestureDetector;
+
     /**
      * Initialise the surface view and set the OpenGL version.
      * @param context A context
@@ -33,6 +37,10 @@ public class OpenGLSurfaceView extends GLSurfaceView {
         super(context);
 
         mContext = context;
+
+        GestureControl controller = new GestureControl();
+        mGestureDetector = new GestureDetectorCompat(context, controller);
+        mGestureDetector.setOnDoubleTapListener(controller);
 
         this.setEGLContextClientVersion(2);
     }
@@ -75,9 +83,10 @@ public class OpenGLSurfaceView extends GLSurfaceView {
      */
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        if (mRenderer != null) {
+        /* if (mRenderer != null) {
             return mRenderer.onTouchEvent(event);
-        }
+        } */
+        mGestureDetector.onTouchEvent(event);
         return super.onTouchEvent(event);
     }
 }
