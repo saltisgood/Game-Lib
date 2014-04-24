@@ -5,6 +5,7 @@ import android.opengl.GLES20;
 import android.opengl.Matrix;
 import android.view.MotionEvent;
 
+import com.nickstephen.gamelib.anim.TranslationAnimation;
 import com.nickstephen.gamelib.opengl.Quadrilateral;
 import com.nickstephen.gamelib.opengl.Shape;
 import com.nickstephen.gamelib.opengl.gestures.GestureEvent;
@@ -288,12 +289,8 @@ public class Container extends Quadrilateral {
     @Override
     public boolean onGestureEvent(@NotNull GestureEvent e, float relativePosX, float relativePosY) {
         if (e.type == GestureEvent.Type.FINISH) {
-            mGestureDownTime = UNSET_TIME;
             mIsBeingDragged = false;
         } else if (!withinBounds(relativePosX, relativePosY, mTouchSlop)) {
-            if (e.originalTime == mGestureDownTime) {
-                mGestureDownTime = UNSET_TIME;
-            }
             mIsBeingDragged = false;
             return false;
         }
@@ -322,7 +319,7 @@ public class Container extends Quadrilateral {
             }
         //}
 
-        if (mIsScrollable && e.originalTime == mGestureDownTime) {
+        if (mIsScrollable) {
             if (e.type == GestureEvent.Type.SCROLL) {
                 mIsBeingDragged = true;
                 GestureScroll scroll = (GestureScroll)e;
@@ -399,19 +396,17 @@ public class Container extends Quadrilateral {
     }
 
     protected boolean onInterceptGestureEvent(GestureEvent e) {
-        if (e.type == GestureEvent.Type.SCROLL && mIsBeingDragged && e.originalTime == mGestureDownTime) {
+        if (e.type == GestureEvent.Type.SCROLL && mIsBeingDragged) {
             GestureScroll scroll = (GestureScroll) e;
             move(scroll.scrollX, scroll.scrollY);
             return true;
         }
-        if (e.type == GestureEvent.Type.FLING && e.originalTime == mGestureDownTime && mIsBeingDragged) {
+        if (e.type == GestureEvent.Type.FLING && mIsBeingDragged) {
             // TODO: Fling
+            new TranslationAnimation(this, )
             return true;
         }
 
-        if (e.type == GestureEvent.Type.DOWN) {
-            mGestureDownTime = e.originalTime;
-        }
         return false;
     }
 

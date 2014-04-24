@@ -42,8 +42,6 @@ public abstract class Shape implements ITouchL, IGestureL {
     protected final float[] mScratch = new float[16];
     protected final int mTouchSlop;
 
-    protected long mGestureDownTime = UNSET_TIME;
-
     private final float[] mModelMatrix = new float[16];
 
     protected float[] mColour = new float[4];
@@ -301,14 +299,14 @@ public abstract class Shape implements ITouchL, IGestureL {
 
         switch (e.type) {
             case SCROLL:
-                if (!mClickable || mIsFixed || mGestureDownTime != e.originalTime) {
+                if (!mClickable || mIsFixed) {
                     return false;
                 } else {
                     // TODO: Do move
                     return true;
                 }
             case FLING:
-                if (!mClickable || mIsFixed || mGestureDownTime != e.originalTime) {
+                if (!mClickable || mIsFixed) {
                     return false;
                 } else {
                     // TODO: Do fling
@@ -334,12 +332,6 @@ public abstract class Shape implements ITouchL, IGestureL {
                 } else {
                     return false;
                 }
-            case DOWN:
-                mGestureDownTime = e.originalTime;
-                return false;
-            case FINISH:
-                mGestureDownTime = UNSET_TIME;
-                return false;
         }
 
         return false;
