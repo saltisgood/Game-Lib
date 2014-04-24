@@ -85,6 +85,7 @@ public abstract class Shape implements ITouchL, IGestureL {
     private GLSurfaceView mSurface;
     private int mTextureId;
     private UnsetPressedState mUnsetPressedState;
+    protected final Context mContext;
     /**
      * The rough distance to the top of the shape
      */
@@ -99,6 +100,8 @@ public abstract class Shape implements ITouchL, IGestureL {
     public Shape(@NotNull Context context, @Nullable Container parent) {
         mProgram = new GenericProgram();
         mProgram.init();
+
+        mContext = context;
 
         mTouchSlop = ViewConfiguration.get(context).getScaledTouchSlop();
 
@@ -120,6 +123,8 @@ public abstract class Shape implements ITouchL, IGestureL {
         if (!mProgram.isInitialized()) {
             mProgram.init();
         }
+
+        mContext = context;
 
         mTouchSlop = ViewConfiguration.get(context).getScaledTouchSlop();
         mParent = parent;

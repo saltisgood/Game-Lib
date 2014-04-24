@@ -5,10 +5,12 @@ import android.opengl.GLES20;
 import android.opengl.Matrix;
 import android.view.MotionEvent;
 
+import com.nickstephen.gamelib.anim.FlingAnimation;
 import com.nickstephen.gamelib.anim.TranslationAnimation;
 import com.nickstephen.gamelib.opengl.Quadrilateral;
 import com.nickstephen.gamelib.opengl.Shape;
 import com.nickstephen.gamelib.opengl.gestures.GestureEvent;
+import com.nickstephen.gamelib.opengl.gestures.GestureFling;
 import com.nickstephen.gamelib.opengl.gestures.GestureScroll;
 import com.nickstephen.lib.Twig;
 import com.nickstephen.lib.VersionControl;
@@ -402,8 +404,11 @@ public class Container extends Quadrilateral {
             return true;
         }
         if (e.type == GestureEvent.Type.FLING && mIsBeingDragged) {
-            // TODO: Fling
-            new TranslationAnimation(this, )
+            GestureFling fling = (GestureFling) e;
+            //new TranslationAnimation(this, fling.xVelocity, fling.yVelocity).start();
+            new FlingAnimation(this, mContext).setStartPositions((int) getX(), (int) getY())
+                    .setStartVelocities((int) fling.xVelocity, (int) fling.yVelocity)
+                    .start();
             return true;
         }
 

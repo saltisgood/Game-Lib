@@ -4,7 +4,6 @@ import android.content.Context;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
-import android.view.MotionEvent;
 import com.nickstephen.gamelib.opengl.layout.RootContainer;
 import com.nickstephen.gamelib.run.Game;
 
@@ -25,7 +24,7 @@ import javax.microedition.khronos.opengles.GL10;
  */
 public class Renderer implements GLSurfaceView.Renderer {
     protected final Context mContext;
-    protected GLSurfaceView mSurface;
+    protected OpenGLSurfaceView mSurface;
 
     private float[] mBaseViewMatrix = new float[16];
     private float[] mProjMatrix = new float[16];
@@ -84,6 +83,7 @@ public class Renderer implements GLSurfaceView.Renderer {
      */
     @Override
     public void onSurfaceChanged(GL10 gl, int width, int height) {
+        Game.getInstanceUnsafe().setSurface(mSurface);
         Game.getInstanceUnsafe().setup(width, height);
 
         GLES20.glViewport(0, 0, width, height);
@@ -117,6 +117,8 @@ public class Renderer implements GLSurfaceView.Renderer {
      */
     @Override
     public void onSurfaceCreated(GL10 gl, EGLConfig config) {
+        Game.getInstanceUnsafe().setSurface(mSurface);
+
         GLES20.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
         GLES20.glEnable(GLES20.GL_BLEND);

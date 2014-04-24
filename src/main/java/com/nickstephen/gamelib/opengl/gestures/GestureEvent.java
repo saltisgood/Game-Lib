@@ -13,9 +13,11 @@ public class GestureEvent {
         switch (t) {
             case SCROLL:
                 return new GestureScroll(e, t, param4, param5);
+            case FLING:
+                return new GestureFling(e, param4, param5);
+
             case FINISH:
             case DOWN:
-            case FLING:
             case LONG_PRESS:
             case SHOW_PRESS:
             case SINGLE_TAP:
