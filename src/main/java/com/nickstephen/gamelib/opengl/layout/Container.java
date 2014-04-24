@@ -350,7 +350,8 @@ public class Container extends Quadrilateral {
                 return true;
             }
         }
-        // TODO: General gesture handling
+
+        // TODO: Should containers also have click events?
 
         return false;
     }

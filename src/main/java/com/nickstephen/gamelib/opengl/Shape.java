@@ -260,13 +260,7 @@ public abstract class Shape implements IGestures {
         mModelMatrixInvalidated = true;
     }
 
-    @Override
-    public boolean onGestureEvent(@NotNull GestureEvent e, float relativePosX, float relativePosY) {
-        // If outside the bounds of the shape don't consume the event
-        if (!withinBounds(relativePosX, relativePosY)) {
-            return false;
-        }
-
+    public boolean giveGestureEvent(@NotNull GestureEvent e) {
         if (e.type != GestureEvent.Type.FINISH) {
             if (mCurrentFlingAnim != null) {
                 if (!mCurrentFlingAnim.shouldFinish(0)) {
@@ -285,8 +279,10 @@ public abstract class Shape implements IGestures {
                     if (mOnScrollListener != null) {
                         mOnScrollListener.onGesture(this, e);
                     }
+                    GameLoop.getInstanceUnsafe().setFocusShape(this);
                     return true;
                 }
+                break;
             case FLING:
                 if (mClickable && !mIsFixed) {
                     GestureFling fling = (GestureFling) e;
@@ -296,23 +292,37 @@ public abstract class Shape implements IGestures {
                     mCurrentFlingAnim.start();
                     return true;
                 }
+                break;
             case SINGLE_TAP:
                 if (mClickable && mOnClickListener != null) {
                     mOnClickListener.onClick(this);
                     return true;
                 }
+                break;
             case DOUBLE_TAP:
                 if (mClickable && mOnDoubleClickListener != null) {
                     mOnDoubleClickListener.onClick(this);
                     return true;
                 }
+                break;
             case LONG_PRESS:
                 if (mClickable && mLongClickable) {
                     return performLongClick();
                 }
+                break;
         }
 
         return false;
+    }
+
+    @Override
+    public boolean onGestureEvent(@NotNull GestureEvent e, float relativePosX, float relativePosY) {
+        // If outside the bounds of the shape don't consume the event
+        if (!withinBounds(relativePosX, relativePosY)) {
+            return false;
+        }
+
+        return giveGestureEvent(e);
     }
 
     /**

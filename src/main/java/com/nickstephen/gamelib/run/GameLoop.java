@@ -46,6 +46,7 @@ public class GameLoop implements Runnable {
     private boolean mPause = true;
     private boolean mIsAlive = false;
     private Handler mHandler;
+    private Shape mFocusShape;
 
     /**
      * Construct the GameLoop (doesn't start it).
@@ -127,6 +128,17 @@ public class GameLoop implements Runnable {
      * @return True to signal that the loop should continue without consuming any more gesture events
      */
     protected boolean handleUserInput(@NotNull GestureEvent e) {
+        if (mFocusShape != null) {
+            if (e.type == GestureEvent.Type.FINISH) {
+                mFocusShape = null;
+                return false;
+            }
+
+            if (mFocusShape.giveGestureEvent(e)) {
+                return true;
+            }
+        }
+
         RootContainer root = Game.getInstanceUnsafe().getActiveView();
         if (root != null) {
             return root.onGestureEvent(e);
@@ -252,5 +264,9 @@ public class GameLoop implements Runnable {
                 i--;
             }
         }
+    }
+
+    public void setFocusShape(@NotNull Shape shape) {
+        mFocusShape = shape;
     }
 }
