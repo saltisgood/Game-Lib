@@ -4,6 +4,7 @@ import android.content.Context;
 import android.opengl.GLSurfaceView;
 import android.view.MotionEvent;
 
+import com.nickstephen.gamelib.opengl.gestures.GestureEvent;
 import com.nickstephen.gamelib.opengl.text.FPSMeter;
 import com.nickstephen.lib.VersionControl;
 
@@ -83,5 +84,12 @@ public class RootContainer extends Container {
         float relY = -(e.getRawY() - (getScreenHeight() / 2.0f));
 
         return onTouchEvent(e, relX, relY);
+    }
+
+    public boolean onGestureEvent(GestureEvent e) {
+        float relX = e.originalX - (getScreenWidth() / 2.0f);
+        float relY = -(e.originalY - (getScreenHeight() / 2.0f));
+
+        return onGestureEvent(e, relX, relY);
     }
 }

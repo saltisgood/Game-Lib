@@ -7,6 +7,7 @@ import android.view.MotionEvent;
 
 import com.nickstephen.gamelib.opengl.Quadrilateral;
 import com.nickstephen.gamelib.opengl.Shape;
+import com.nickstephen.gamelib.opengl.gestures.GestureEvent;
 import com.nickstephen.lib.VersionControl;
 
 import org.jetbrains.annotations.NotNull;
@@ -282,6 +283,38 @@ public class Container extends Quadrilateral {
         this.moveTo(newX, newY);
     }
 
+    @Override
+    public boolean onGestureEvent(@NotNull GestureEvent e, float relativePosX, float relativePosY) {
+        if (!withinBounds(relativePosX, relativePosY, mTouchSlop)) {
+            mIsBeingDragged = false;
+            return false;
+        }
+
+        relativePosX -= mParentOffsetX;
+        relativePosY -= mParentOffsetY;
+
+        float childX = relativePosX - this.getX();
+        float childY = relativePosY - this.getY();
+
+        if (!onInterceptGestureEvent(e, childX, childY)) {
+            for (Shape shape : mChildren) {
+                if (shape.onGestureEvent(e, childX, childY)) {
+                    return true;
+                }
+            }
+
+            for (Container c : mChildContainers) {
+                if (c.onGestureEvent(e, childX, childY)) {
+                    return true;
+                }
+            }
+        }
+
+        // TODO: Scroll stuff
+
+        return false;
+    }
+
     /**
      * Method that handles all touch events for the container. Will determine whether this container
      * or anything inside it will consume the event or if it should be passed on.
@@ -338,6 +371,10 @@ public class Container extends Quadrilateral {
     @Override
     public @NotNull float[] getModelMatrix() {
         return mVPMatrix;
+    }
+
+    protected boolean onInterceptGestureEvent(GestureEvent e, float relX, float relY) {
+        return false;
     }
 
     /**

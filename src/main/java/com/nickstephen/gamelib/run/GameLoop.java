@@ -129,7 +129,7 @@ public class GameLoop implements Runnable {
     protected boolean handleUserInput(@NotNull GestureEvent e) {
         RootContainer root = Game.getInstanceUnsafe().getActiveView();
         if (root != null) {
-
+            return root.onGestureEvent(e);
         }
 
         return true;
