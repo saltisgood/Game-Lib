@@ -7,6 +7,8 @@ import android.view.MotionEvent;
 import android.view.ViewConfiguration;
 
 import com.nickstephen.gamelib.GeneralUtil;
+import com.nickstephen.gamelib.opengl.gestures.GestureEvent;
+import com.nickstephen.gamelib.opengl.gestures.IGestureL;
 import com.nickstephen.gamelib.opengl.layout.Container;
 import com.nickstephen.gamelib.opengl.program.GenericProgram;
 import com.nickstephen.gamelib.opengl.program.Program;
@@ -26,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * @author Nick Stephen
  */
-public abstract class Shape implements ITouchL {
+public abstract class Shape implements ITouchL, IGestureL {
     private static final int PFLAG_PREPRESSED = 0x02000000;
     private static final int PFLAG_PRESSED = 0x00004000;
 
@@ -66,6 +68,7 @@ public abstract class Shape implements ITouchL {
     private float mLeft;
     private boolean mLongClickable = false;
     private boolean mModelMatrixInvalidated = true;
+    private boolean mIsFixed = true;
     private IOnClickL mOnClickListener;
     private IOnClickL mOnLongClickListener;
     private Container mParent;
@@ -283,6 +286,53 @@ public abstract class Shape implements ITouchL {
         mBaseY = newY;
 
         mModelMatrixInvalidated = true;
+    }
+
+    @Override
+    public boolean onGestureEvent(@NotNull GestureEvent e, float relativePosX, float relativePosY) {
+        // If outside the bounds of the shape don't consume the event
+        if (!withinBounds(relativePosX, relativePosY)) {
+            return false;
+        }
+
+        switch (e.type) {
+            case SCROLL:
+                if (!mClickable || mIsFixed) {
+                    return false;
+                } else {
+                    // TODO: Do move
+                    return true;
+                }
+            case FLING:
+                if (!mClickable || mIsFixed) {
+                    return false;
+                } else {
+                    // TODO: Do fling
+                    return true;
+                }
+            case SINGLE_TAP:
+                if (mClickable) {
+                    return performClick();
+                } else {
+                    return false;
+                }
+            case DOUBLE_TAP:
+                if (mClickable) {
+                    // TODO: Double click handler
+                    // return performDoubleClick();
+                    return false;
+                } else {
+                    return false;
+                }
+            case LONG_PRESS:
+                if (mClickable && mLongClickable) {
+                    return performLongClick();
+                } else {
+                    return false;
+                }
+        }
+
+        return false;
     }
 
     /**

@@ -84,9 +84,10 @@ public class OpenGLSurfaceView extends GLSurfaceView {
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         /* if (mRenderer != null) {
-            return mRenderer.onTouchEvent(event);
+            return mRenderer.onGestureEvent(event);
         } */
         mGestureDetector.onTouchEvent(event);
-        return super.onTouchEvent(event);
+        //return super.onTouchEvent(event);
+        return true;
     }
 }

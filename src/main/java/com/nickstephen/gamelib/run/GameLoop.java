@@ -4,9 +4,12 @@ import android.os.Handler;
 
 import com.nickstephen.gamelib.anim.Animation;
 import com.nickstephen.gamelib.opengl.Shape;
+import com.nickstephen.gamelib.opengl.gestures.GestureEvent;
+import com.nickstephen.gamelib.opengl.layout.RootContainer;
 import com.nickstephen.lib.Twig;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -102,8 +105,34 @@ public class GameLoop implements Runnable {
      * @param now The current system time (millis)
      */
     private void tick(long now) {
+        {
+            GestureEvent e;
+            //noinspection StatementWithEmptyBody
+            while ((e = Game.getInstanceUnsafe().popInput()) != null && !handleUserInput(e)) {}
+        }
         updateGameLogic();
         updateAnimations(now);
+    }
+
+    /**
+     * Write your own override method to handle user gesture events before the game logic is performed.
+     * The return value determines whether to continue feeding gesture events before continuing on to
+     * the rest of the tick method. i.e. If you ignored the gesture and want another one, return false.
+     * The default method just passes all events onto the RootContainer with no filtering.
+     *
+     * The method will never be called with a null input (if there are no more gestures in the queue).
+     *
+     * NOTE: This is called from the Game thread, not the main thread!
+     * @param e The event to consume
+     * @return True to signal that the loop should continue without consuming any more gesture events
+     */
+    protected boolean handleUserInput(@NotNull GestureEvent e) {
+        RootContainer root = Game.getInstanceUnsafe().getActiveView();
+        if (root != null) {
+
+        }
+
+        return true;
     }
 
     /**

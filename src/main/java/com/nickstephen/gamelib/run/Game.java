@@ -2,9 +2,11 @@ package com.nickstephen.gamelib.run;
 
 import com.nickstephen.gamelib.opengl.OpenGLSurfaceView;
 import com.nickstephen.gamelib.opengl.Shape;
+import com.nickstephen.gamelib.opengl.gestures.GestureEvent;
 import com.nickstephen.gamelib.opengl.layout.RootContainer;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -16,13 +18,17 @@ public abstract class Game {
     protected static Game sInstance;
 
     public static Game getInstanceUnsafe() {
+        if (sInstance == null) {
+            throw new NullPointerException("Game singleton not initialised! Sub-class gamelib.run.Game and instantiate sInstance before use!");
+        }
         return sInstance;
     }
 
     private OpenGLSurfaceView mSurface;
-    private RootContainer mActiveView;
+    protected RootContainer mActiveView;
     private int mWidth, mHeight;
     private final List<Runnable> mActions = new LinkedList<Runnable>();
+    private final List<GestureEvent> mInputs = new LinkedList<GestureEvent>();
 
     public void setSurface(@NotNull OpenGLSurfaceView surface) {
         mSurface = surface;
@@ -40,6 +46,33 @@ public abstract class Game {
     public Runnable getGLThreadAction() {
         if (mActions.size() > 0) {
             return mActions.remove(0);
+        }
+        return null;
+    }
+
+    public void addInput(@NotNull GestureEvent e) {
+        if (!consumeInputEvent(e)) {
+            mInputs.add(e);
+        }
+    }
+
+    /**
+     * Sub-classes should override this method if there are certain inputs that should be immediately
+     * used before the next game thread tick. Be careful! This will be called on the GUI thread.
+     * @param e The event to consume
+     * @return True to signal the event was consumed and should not be added to the input queue, false otherwise
+     */
+    protected boolean consumeInputEvent(@NotNull GestureEvent e) {
+        return false;
+    }
+
+    public void clearInputs() {
+        mInputs.clear();
+    }
+
+    @Nullable GestureEvent popInput() {
+        if (mInputs.size() > 0) {
+            return mInputs.remove(0);
         }
         return null;
     }
