@@ -12,6 +12,7 @@ import com.nickstephen.gamelib.opengl.Shape;
 import com.nickstephen.gamelib.opengl.gestures.GestureEvent;
 import com.nickstephen.gamelib.opengl.gestures.GestureFling;
 import com.nickstephen.gamelib.opengl.gestures.GestureScroll;
+import com.nickstephen.gamelib.run.GameLoop;
 import com.nickstephen.lib.Twig;
 import com.nickstephen.lib.VersionControl;
 
@@ -219,7 +220,7 @@ public class Container extends Quadrilateral {
      * @param y The y position (relative to the centre of this container)
      * @return True if the touch position is within the bounds of a child, false otherwise
      */
-    private boolean inChild(float x, float y) {
+    private boolean isPointInChild(float x, float y) {
         for (Shape shape : mChildren) {
             if (shape.withinBounds(x, y)) {
                 return true;
@@ -297,6 +298,16 @@ public class Container extends Quadrilateral {
             return false;
         }
 
+        if (e.type != GestureEvent.Type.FINISH) {
+            if (mCurrentFlingAnim != null) {
+                if (!mCurrentFlingAnim.shouldFinish(0)) {
+                    mCurrentFlingAnim.forceFinish();
+                    GameLoop.getInstanceUnsafe().removeAnimation(mCurrentFlingAnim);
+                }
+                mCurrentFlingAnim = null;
+            }
+        }
+
         if (onInterceptGestureEvent(e)) {
             return true;
         }
@@ -307,81 +318,39 @@ public class Container extends Quadrilateral {
         float childX = relativePosX - this.getX();
         float childY = relativePosY - this.getY();
 
-        //if (!onInterceptGestureEvent(e)) {
-            for (Shape shape : mChildren) {
-                if (shape.onGestureEvent(e, childX, childY)) {
-                    return true;
-                }
+        for (Shape shape : mChildren) {
+            if (shape.onGestureEvent(e, childX, childY)) {
+                return true;
             }
+        }
 
-            for (Container c : mChildContainers) {
-                if (c.onGestureEvent(e, childX, childY)) {
-                    return true;
-                }
+        for (Container c : mChildContainers) {
+            if (c.onGestureEvent(e, childX, childY)) {
+                return true;
             }
-        //}
+        }
 
         if (mIsScrollable) {
             if (e.type == GestureEvent.Type.SCROLL) {
                 mIsBeingDragged = true;
-                GestureScroll scroll = (GestureScroll)e;
+                GestureScroll scroll = (GestureScroll) e;
                 move(scroll.scrollX, scroll.scrollY);
+
+                if (mOnScrollListener != null) {
+                    mOnScrollListener.onGesture(this, e);
+                }
                 return true;
             } else if (e.type == GestureEvent.Type.FLING) {
                 mIsBeingDragged = false;
-                Twig.debug("Container", "Fling event detected!");
-                //TODO: Fling handling
+                mCurrentFlingAnim = new FlingAnimation(this, mContext);
+
+                if (mOnFlingListener != null) {
+                    mOnFlingListener.onGesture(this, e);
+                }
                 return true;
             }
         }
         // TODO: General gesture handling
-
-        return false;
-    }
-
-    /**
-     * Method that handles all touch events for the container. Will determine whether this container
-     * or anything inside it will consume the event or if it should be passed on.
-     *
-     * @param e    The original motion event
-     * @param relX The position of the touch relative to the parent of this container's centre (pixels, x-axis)
-     * @param relY The position of the touch relative to the parent of this container's centre (pixels, y-axis)
-     * @return True if the container consumed the event, false if it should be passed on
-     */
-    @Override
-    public boolean onTouchEvent(@NotNull MotionEvent e, float relX, float relY) {
-        if (!withinBounds(relX, relY)) {
-            mIsBeingDragged = false;
-            return false;
-        }
-
-        relX -= mParentOffsetX;
-        relY -= mParentOffsetY;
-
-        if (!onInterceptTouchEvent(e, relX - this.getX(), relY - this.getY())) {
-            for (Shape shape : mChildren) {
-                if (shape.onTouchEvent(e, relX - this.getX(), relY - this.getY())) {
-                    return true;
-                }
-            }
-            for (Container c : mChildContainers) {
-                if (c.onTouchEvent(e, relX - this.getX(), relY - this.getY())) {
-                    return true;
-                }
-            }
-        }
-
-        if (mIsScrollable) {
-            switch (e.getAction()) {
-                case MotionEvent.ACTION_MOVE:
-                    move(relX - mLastMotionX, relY - mLastMotionY);
-                case MotionEvent.ACTION_DOWN:
-                    mLastMotionX = relX;
-                    mLastMotionY = relY;
-                    break;
-            }
-            return true;
-        }
 
         return false;
     }
@@ -405,103 +374,14 @@ public class Container extends Quadrilateral {
         }
         if (e.type == GestureEvent.Type.FLING && mIsBeingDragged) {
             GestureFling fling = (GestureFling) e;
-            //new TranslationAnimation(this, fling.xVelocity, fling.yVelocity).start();
-            new FlingAnimation(this, mContext).setStartPositions((int) getX(), (int) getY())
-                    .setStartVelocities((int) fling.xVelocity, (int) fling.yVelocity)
-                    .start();
+            mCurrentFlingAnim = new FlingAnimation(this, mContext)
+                    .setStartPositions((int) getX(), (int) getY())
+                    .setStartVelocities((int) fling.xVelocity, (int) fling.yVelocity);
+            mCurrentFlingAnim.start();
             return true;
         }
 
         return false;
-    }
-
-    /**
-     * This method determines whether to intercept the motion. Should only be called from
-     * {@link #onTouchEvent(android.view.MotionEvent, float, float)} and the actual work is done there.
-     *
-     * @param e    The original motion event
-     * @param relX The position of the touch relative to the parent of this container's centre (pixels, x-axis)
-     * @param relY The position of the touch relative to the parent of this container's centre (pixels, y-axis)
-     * @return True if the container should attempt to intercept the touch event, false otherwise
-     */
-    protected boolean onInterceptTouchEvent(MotionEvent e, float relX, float relY) {
-        /*
-        * Shortcut the most recurring case: the user is in the dragging
-        * state and he is moving his finger.  We want to intercept this
-        * motion.
-        */
-        final int action = e.getAction();
-        if ((action == MotionEvent.ACTION_MOVE) && (mIsBeingDragged)) {
-            return true;
-        }
-
-        /*
-         * Don't try to intercept touch if we can't scroll anyway.
-         */
-        if (!mIsScrollable) {
-            return false;
-        }
-
-        switch (action & MotionEvent.ACTION_MASK) {
-            case MotionEvent.ACTION_MOVE: {
-                float yDiff = Math.abs(relY - mLastMotionY);
-                if (yDiff > mTouchSlop) {
-                    mIsBeingDragged = true;
-                }
-                break;
-            }
-
-            case MotionEvent.ACTION_DOWN: {
-                if (!inChild(relX, relY)) {
-                    mIsBeingDragged = false;
-                    break;
-                }
-
-                /*
-                 * Remember location of down touch.
-                 * ACTION_DOWN always refers to pointer index 0.
-                 */
-                mActivePointerId = e.getPointerId(0);
-                break;
-            }
-
-            case MotionEvent.ACTION_CANCEL:
-            case MotionEvent.ACTION_UP:
-                /* Release the drag */
-                mIsBeingDragged = false;
-                mActivePointerId = INVALID_POINTER;
-                break;
-            case MotionEvent.ACTION_POINTER_UP:
-                onSecondaryPointerUp(e);
-                break;
-        }
-
-        /*
-        * The only time we want to intercept motion events is if we are in the
-        * drag mode.
-        */
-        return mIsBeingDragged;
-    }
-
-    /**
-     * Not really used to any extent yet. May be used later to implement multiple finger support.
-     *
-     * @param ev The original motion event
-     */
-    private void onSecondaryPointerUp(MotionEvent ev) {
-        final int pointerIndex = (ev.getAction() & MotionEvent.ACTION_POINTER_INDEX_MASK) >>
-                MotionEvent.ACTION_POINTER_INDEX_SHIFT;
-        final int pointerId = ev.getPointerId(pointerIndex);
-        if (pointerId == mActivePointerId) {
-            // This was our active pointer going up. Choose a new
-            // active pointer and adjust accordingly.
-            final int newPointerIndex = pointerIndex == 0 ? 1 : 0;
-            mLastMotionY = (int) ev.getY(newPointerIndex);
-            mActivePointerId = ev.getPointerId(newPointerIndex);
-            /* if (mVelocityTracker != null) {
-                mVelocityTracker.clear();
-            } */
-        }
     }
 
     /**

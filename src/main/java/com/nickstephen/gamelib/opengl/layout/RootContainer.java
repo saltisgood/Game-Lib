@@ -72,20 +72,6 @@ public class RootContainer extends Container {
         return 0;
     }
 
-    /**
-     * Takes the touch event from the surface, converts the coordinates to be relative to the centre
-     * of the container and passes it to {@link #onTouchEvent(android.view.MotionEvent, float, float)}
-     * for further processing.
-     * @param e The touch event from the surface
-     * @return True if a screen component consumed the event, false otherwise
-     */
-    public boolean onTouchEvent(MotionEvent e) {
-        float relX = e.getRawX() - (getScreenWidth() / 2.0f);
-        float relY = -(e.getRawY() - (getScreenHeight() / 2.0f));
-
-        return onTouchEvent(e, relX, relY);
-    }
-
     public boolean onGestureEvent(GestureEvent e) {
         float relX = e.originalX - (getScreenWidth() / 2.0f);
         float relY = -(e.originalY - (getScreenHeight() / 2.0f));

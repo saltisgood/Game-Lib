@@ -3,17 +3,20 @@ package com.nickstephen.gamelib.opengl;
 import android.content.Context;
 import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
-import android.view.MotionEvent;
 import android.view.ViewConfiguration;
 
 import com.nickstephen.gamelib.GeneralUtil;
+import com.nickstephen.gamelib.anim.FlingAnimation;
 import com.nickstephen.gamelib.opengl.gestures.GestureEvent;
-import com.nickstephen.gamelib.opengl.gestures.IGestureL;
+import com.nickstephen.gamelib.opengl.gestures.GestureFling;
+import com.nickstephen.gamelib.opengl.gestures.GestureScroll;
+import com.nickstephen.gamelib.opengl.gestures.IGestures;
+import com.nickstephen.gamelib.opengl.gestures.IOnGestureL;
 import com.nickstephen.gamelib.opengl.layout.Container;
 import com.nickstephen.gamelib.opengl.program.GenericProgram;
 import com.nickstephen.gamelib.opengl.program.Program;
-import com.nickstephen.gamelib.opengl.widget.IOnClickL;
-import com.nickstephen.gamelib.opengl.widget.ITouchL;
+import com.nickstephen.gamelib.opengl.gestures.IOnClickL;
+import com.nickstephen.gamelib.run.GameLoop;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,12 +31,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * @author Nick Stephen
  */
-public abstract class Shape implements ITouchL, IGestureL {
-    protected static final long UNSET_TIME = -1L;
-
-    private static final int PFLAG_PREPRESSED = 0x02000000;
-    private static final int PFLAG_PRESSED = 0x00004000;
-
+public abstract class Shape implements IGestures {
     protected final Program mProgram;
     /**
      * A 4x4 float matrix pre-allocated here and whose contents can not be trusted in between
@@ -46,6 +44,12 @@ public abstract class Shape implements ITouchL, IGestureL {
 
     protected float[] mColour = new float[4];
     protected Vertices mVertices;
+    protected FlingAnimation mCurrentFlingAnim;
+    protected IOnClickL mOnClickListener;
+    protected IOnClickL mOnLongClickListener;
+    protected IOnClickL mOnDoubleClickListener;
+    protected IOnGestureL mOnScrollListener;
+    protected IOnGestureL mOnFlingListener;
 
     private float mAlpha = 1.0f;
     private float mAngle;
@@ -63,7 +67,6 @@ public abstract class Shape implements ITouchL, IGestureL {
      * The rough distance to the bottom of the shape
      */
     private float mDown;
-    private boolean mHasPerformedLongPress = false;
     /**
      * The rough distance to the left side of the shape
      */
@@ -71,20 +74,14 @@ public abstract class Shape implements ITouchL, IGestureL {
     private boolean mLongClickable = false;
     private boolean mModelMatrixInvalidated = true;
     private boolean mIsFixed = true;
-    private IOnClickL mOnClickListener;
-    private IOnClickL mOnLongClickListener;
+    
     private Container mParent;
-    private CheckForLongPress mPendingCheckForLongPress;
-    private CheckForTap mPendingCheckForTap;
-    private PerformClick mPerformClick;
-    private int mPrivateFlags;
     /**
      * The rough distance to the right side of the shape
      */
     private float mRight;
     private GLSurfaceView mSurface;
     private int mTextureId;
-    private UnsetPressedState mUnsetPressedState;
     protected final Context mContext;
     /**
      * The rough distance to the top of the shape
@@ -161,22 +158,6 @@ public abstract class Shape implements ITouchL, IGestureL {
     }
 
     /**
-     * Check for a long click
-     * @param delayOffset The delay offset to use
-     */
-    private void checkForLongClick(int delayOffset) {
-        if (mLongClickable) {
-            mHasPerformedLongPress = false;
-
-            if (mPendingCheckForLongPress == null) {
-                mPendingCheckForLongPress = new CheckForLongPress();
-            }
-            postDelayed(mPendingCheckForLongPress,
-                    ViewConfiguration.getLongPressTimeout() - delayOffset);
-        }
-    }
-
-    /**
      * Set whether the shape should be clickable
      * @param val True to be clickable, false otherwise
      */
@@ -242,22 +223,6 @@ public abstract class Shape implements ITouchL, IGestureL {
     }
 
     /**
-     * Gets whether the shape is inside a container with scrolling capabilities
-     * @return True is the container is scrollable, false otherwise
-     */
-    public boolean isInScrollingContainer() {
-        return mParent.isScrollable();
-    }
-
-    /**
-     * Gets whether the shape is currently in a pressed state
-     * @return True if it's pressed, false otherwise
-     */
-    public boolean isPressed() {
-        return (mPrivateFlags & PFLAG_PREPRESSED) == PFLAG_PREPRESSED;
-    }
-
-    /**
      * Get the model matrix for this shape. The base implementation is simply a translation matrix
      * based on the {@link #mBaseX} and {@link #mBaseY} positions, (z ignored).
      * @return The float matrix
@@ -302,146 +267,52 @@ public abstract class Shape implements ITouchL, IGestureL {
             return false;
         }
 
+        if (e.type != GestureEvent.Type.FINISH) {
+            if (mCurrentFlingAnim != null) {
+                if (!mCurrentFlingAnim.shouldFinish(0)) {
+                    mCurrentFlingAnim.forceFinish();
+                    GameLoop.getInstanceUnsafe().removeAnimation(mCurrentFlingAnim);
+                }
+                mCurrentFlingAnim = null;
+            }
+        }
+
         switch (e.type) {
             case SCROLL:
-                if (!mClickable || mIsFixed) {
-                    return false;
-                } else {
-                    // TODO: Do move
+                if (mClickable && !mIsFixed) {
+                    GestureScroll scroll = (GestureScroll) e;
+                    move(scroll.scrollX, scroll.scrollY);
+                    if (mOnScrollListener != null) {
+                        mOnScrollListener.onGesture(this, e);
+                    }
                     return true;
                 }
             case FLING:
-                if (!mClickable || mIsFixed) {
-                    return false;
-                } else {
-                    // TODO: Do fling
+                if (mClickable && !mIsFixed) {
+                    GestureFling fling = (GestureFling) e;
+                    mCurrentFlingAnim = new FlingAnimation(this, mContext)
+                            .setStartPositions((int) mBaseX, (int) mBaseY)
+                            .setStartVelocities((int) fling.xVelocity, (int) fling.yVelocity);
+                    mCurrentFlingAnim.start();
                     return true;
                 }
             case SINGLE_TAP:
-                if (mClickable) {
-                    return performClick();
-                } else {
-                    return false;
+                if (mClickable && mOnClickListener != null) {
+                    mOnClickListener.onClick(this);
+                    return true;
                 }
             case DOUBLE_TAP:
-                if (mClickable) {
-                    // TODO: Double click handler
-                    // return performDoubleClick();
-                    return false;
-                } else {
-                    return false;
+                if (mClickable && mOnDoubleClickListener != null) {
+                    mOnDoubleClickListener.onClick(this);
+                    return true;
                 }
             case LONG_PRESS:
                 if (mClickable && mLongClickable) {
                     return performLongClick();
-                } else {
-                    return false;
                 }
         }
 
         return false;
-    }
-
-    /**
-     * The implementation of {@link com.nickstephen.gamelib.opengl.widget.ITouchL} that is mostly just
-     * a port of {@link android.view.View#onTouchEvent(android.view.MotionEvent)} but uses the relative
-     * position arguments instead of those from e.
-     * @param e The original motion event
-     * @param relativePosX The position of the touch event relative to the parent container's offset
-     *                     (x-axis, pixels)
-     * @param relativePosY The position of the touch event relative to the parent container's offset
-     *                     (y-axis, pixels)
-     * @return True if the event was consumed, false otherwise
-     */
-    @Override
-    public boolean onTouchEvent(@NotNull MotionEvent e, float relativePosX, float relativePosY) {
-        // If outside the bounds of the shape don't consume the event
-        if (!withinBounds(relativePosX, relativePosY) && !isPressed()) {
-            return false;
-        }
-
-        if (!mClickable) {
-            return false;
-        }
-
-        switch (e.getAction()) {
-            case MotionEvent.ACTION_DOWN:
-                mHasPerformedLongPress = false;
-
-                if (isInScrollingContainer()) {
-                    mPrivateFlags |= PFLAG_PREPRESSED;
-                    if (mPendingCheckForTap == null) {
-                        mPendingCheckForTap = new CheckForTap();
-                    }
-                    postDelayed(mPendingCheckForTap, ViewConfiguration.getTapTimeout());
-                } else {
-                    setPressed(true);
-                    checkForLongClick(0);
-                }
-                break;
-            case MotionEvent.ACTION_UP:
-                boolean prepressed = (mPrivateFlags & PFLAG_PREPRESSED) != 0;
-                if ((mPrivateFlags & PFLAG_PRESSED) != 0 || prepressed) {
-                    if (prepressed) {
-                        // The button is being released before we actually
-                        // showed it as pressed.  Make it show the pressed
-                        // state now (before scheduling the click) to ensure
-                        // the user sees it.
-                        setPressed(true);
-                    }
-
-                    if (!mHasPerformedLongPress) {
-                        // This is a tap, so remove the longpress check
-                        removeLongPressCallback();
-
-                        // Only perform take click actions if we were in the pressed state
-                        //if (!focusTaken) {
-                        // Use a Runnable and post this rather than calling
-                        // performClick directly. This lets other visual state
-                        // of the view update before click actions start.
-                        if (mPerformClick == null) {
-                            mPerformClick = new PerformClick();
-                        }
-                        if (!post(mPerformClick)) {
-                            performClick();
-                        }
-                        //}
-                    }
-
-                    if (mUnsetPressedState == null) {
-                        mUnsetPressedState = new UnsetPressedState();
-                    }
-
-                    if (prepressed) {
-                        postDelayed(mUnsetPressedState,
-                                ViewConfiguration.getPressedStateDuration());
-                    } else if (!post(mUnsetPressedState)) {
-                        // If the post failed, unpress right now
-                        mUnsetPressedState.run();
-                    }
-                    removeTapCallback();
-                }
-                break;
-            case MotionEvent.ACTION_MOVE:
-                // Be lenient about moving outside of buttons
-                if (!withinBounds(relativePosX, relativePosY, mTouchSlop)) {
-                    // Outside button
-                    removeTapCallback();
-                    if ((mPrivateFlags & PFLAG_PRESSED) != 0) {
-                        // Remove any future long press/tap checks
-                        removeLongPressCallback();
-
-                        setPressed(false);
-                    }
-                }
-                break;
-            case MotionEvent.ACTION_CANCEL:
-                setPressed(false);
-                removeTapCallback();
-                removeLongPressCallback();
-                break;
-        }
-        return true;
     }
 
     /**
@@ -451,18 +322,6 @@ public abstract class Shape implements ITouchL, IGestureL {
      */
     public @Nullable Container getParent() {
         return mParent;
-    }
-
-    /**
-     * Perform a click. Will call the {@link #mOnClickListener} if its set.
-     * @return True if there was a listener and it was called.
-     */
-    public boolean performClick() {
-        if (mOnClickListener != null) {
-            mOnClickListener.onClick(this);
-            return true;
-        }
-        return false;
     }
 
     /**
@@ -500,18 +359,6 @@ public abstract class Shape implements ITouchL, IGestureL {
     }
 
     /**
-     * Set the shape as being pressed or not
-     * @param pressed True to be pressed, false otherwise
-     */
-    public void setPressed(boolean pressed) {
-        if (pressed) {
-            mPrivateFlags |= PFLAG_PREPRESSED;
-        } else {
-            mPrivateFlags &= ~PFLAG_PREPRESSED;
-        }
-    }
-
-    /**
      * Return the OpenGL program associated with this shape.
      * @return The program
      */
@@ -528,25 +375,6 @@ public abstract class Shape implements ITouchL, IGestureL {
     }
 
     /**
-     * Remove a long press callback
-     */
-    private void removeLongPressCallback() {
-        if (mPendingCheckForLongPress != null) {
-            removeCallbacks(mPendingCheckForLongPress);
-        }
-    }
-
-    /**
-     * Remove a tap callback
-     */
-    private void removeTapCallback() {
-        if (mPendingCheckForTap != null) {
-            mPrivateFlags &= ~PFLAG_PREPRESSED;
-            removeCallbacks(mPendingCheckForTap);
-        }
-    }
-
-    /**
      * Resize the shape by a set ratio on all sides
      * @param ratio The ratio to multiply the current side lengths by
      */
@@ -555,6 +383,10 @@ public abstract class Shape implements ITouchL, IGestureL {
         mRight *= ratio;
         mUp *= ratio;
         mDown *= ratio;
+    }
+
+    public void setFixed(boolean fixed) {
+        mIsFixed = fixed;
     }
 
     /**
@@ -569,16 +401,26 @@ public abstract class Shape implements ITouchL, IGestureL {
         mOnClickListener = listener;
     }
 
+    public void setOnDoubleClickListener(@Nullable IOnClickL listener) {
+        mOnDoubleClickListener = listener;
+    }
+
+    public void setOnFlingListener(@Nullable IOnGestureL listener) {
+        mOnFlingListener = listener;
+    }
+
     /**
      * Set the listener to be invoked upon long clicking this shape. If there was previously no listener,
      * the shape is set to be long clickable. The argument can be set to null to remove a listener.
      * @param listener The listener to add
      */
     public void setOnLongClickListener(@Nullable IOnClickL listener) {
-        if (listener != null) {
-            mLongClickable = true;
-        }
+        mLongClickable = listener != null;
         mOnLongClickListener = listener;
+    }
+
+    public void setOnScrollListener(@Nullable IOnGestureL listener) {
+        mOnScrollListener = listener;
     }
 
     /**
@@ -698,51 +540,5 @@ public abstract class Shape implements ITouchL, IGestureL {
      */
     public float getY() {
         return mBaseY;
-    }
-
-    /**
-     * A small implementation of {@link java.lang.Runnable} that is posted to the GUI thread's
-     * handler to check for a long press.
-     */
-    private final class CheckForLongPress implements Runnable {
-        public void run() {
-            if (isPressed()) {
-                if (performLongClick()) {
-                    mHasPerformedLongPress = true;
-                }
-            }
-        }
-    }
-
-    /**
-     * A small implementation of {@link java.lang.Runnable} that is posted to the GUI thread's
-     * handler to check for a tap.
-     */
-    private final class CheckForTap implements Runnable {
-        public void run() {
-            mPrivateFlags &= ~PFLAG_PREPRESSED;
-            setPressed(true);
-            checkForLongClick(ViewConfiguration.getTapTimeout());
-        }
-    }
-
-    /**
-     * A small implementation of {@link java.lang.Runnable} that is posted to the GUI thread's
-     * handler to perform a click.
-     */
-    private final class PerformClick implements Runnable {
-        public void run() {
-            performClick();
-        }
-    }
-
-    /**
-     * A small implementation of {@link java.lang.Runnable} that is posted to the GUI thread's
-     * handler to stop the shape being pressed.
-     */
-    private final class UnsetPressedState implements Runnable {
-        public void run() {
-            setPressed(false);
-        }
     }
 }

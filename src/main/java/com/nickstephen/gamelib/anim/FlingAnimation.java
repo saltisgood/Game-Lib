@@ -21,6 +21,8 @@ public class FlingAnimation extends Animation {
         public void onUpdate(@NotNull Shape shape);
 
         public boolean isFinished();
+
+        public void forceFinish();
     }
 
     private static class FlingAnimationImplBase implements FlingAnimationImpl {
@@ -45,6 +47,11 @@ public class FlingAnimation extends Animation {
         @Override
         public boolean isFinished() {
             return mScroller.isFinished();
+        }
+
+        @Override
+        public void forceFinish() {
+            mScroller.forceFinished(true);
         }
     }
 
@@ -72,6 +79,11 @@ public class FlingAnimation extends Animation {
         public boolean isFinished() {
             return mScroller.isFinished();
         }
+
+        @Override
+        public void forceFinish() {
+            mScroller.forceFinished(true);
+        }
     }
 
     private FlingAnimationImpl mImpl;
@@ -90,6 +102,10 @@ public class FlingAnimation extends Animation {
         } else {
             mImpl = new FlingAnimationImplBase(context);
         }
+    }
+
+    public void forceFinish() {
+        mImpl.forceFinish();
     }
 
     /**

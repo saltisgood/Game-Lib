@@ -1,4 +1,4 @@
-package com.nickstephen.gamelib.opengl.widget;
+package com.nickstephen.gamelib.opengl.gestures;
 
 import com.nickstephen.gamelib.opengl.Shape;
 

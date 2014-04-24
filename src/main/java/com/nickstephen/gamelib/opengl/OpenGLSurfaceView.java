@@ -79,22 +79,18 @@ public class OpenGLSurfaceView extends GLSurfaceView {
     }
 
     /**
-     * Passes the touch event to the renderer, which then passes it to child containers.
+     * Passes the touch event to the gesture detector, which may then pass it to child containers.
      * @param event The motion event
-     * @return True if the event was consumed, false otherwise
+     * @return True always
      */
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        /* if (mRenderer != null) {
-            return mRenderer.onGestureEvent(event);
-        } */
         mGestureDetector.onTouchEvent(event);
 
         int action = event.getActionMasked();
         if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) {
             Game.getInstanceUnsafe().addInput(GestureEvent.construct(event, null, GestureEvent.Type.FINISH, 0f, 0f));
         }
-        //return super.onTouchEvent(event);
         return true;
     }
 }

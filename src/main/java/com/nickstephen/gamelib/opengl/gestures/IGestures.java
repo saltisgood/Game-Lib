@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Created by Nick Stephen on 24/04/2014.
  */
-public interface IGestureL {
+public interface IGestures {
     /**
      * Check whether a gesture event is inside the shape.
      * @param posX The x position of the gesture

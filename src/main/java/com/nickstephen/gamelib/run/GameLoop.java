@@ -239,6 +239,10 @@ public class GameLoop implements Runnable {
         return mHandler;
     }
 
+    public boolean removeAnimation(Animation anim) {
+        return mAnimations.remove(anim);
+    }
+
     public void removeAnimationsOfShape(Shape shape) {
         int len = mAnimations.size();
         for (int i = 0; i < len; i++) {
