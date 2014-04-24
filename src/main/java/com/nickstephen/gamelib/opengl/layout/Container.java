@@ -42,22 +42,17 @@ import java.util.List;
  * @author Nick Stephen
  */
 public class Container extends Quadrilateral {
-    private static final int INVALID_POINTER = -1;
-
     protected final List<Container> mChildContainers;
     protected final List<Shape> mChildren;
 
     protected final float[] mVPMatrix = new float[16];
 
-    private int mActivePointerId = INVALID_POINTER;
     private int mBottom;
     private float mBoundsHeight;
     private float mBoundsWidth;
     private boolean mInfiniteBounds = true;
     private boolean mIsBeingDragged = false;
     private boolean mIsScrollable = false;
-    private float mLastMotionX;
-    private float mLastMotionY;
     private int mLeft;
     private float mParentOffsetX;
     private float mParentOffsetY;
@@ -367,19 +362,30 @@ public class Container extends Quadrilateral {
         return mVPMatrix;
     }
 
-    protected boolean onInterceptGestureEvent(GestureEvent e) {
-        if (e.type == GestureEvent.Type.SCROLL && mIsBeingDragged) {
-            GestureScroll scroll = (GestureScroll) e;
-            move(scroll.scrollX, scroll.scrollY);
-            return true;
-        }
-        if (e.type == GestureEvent.Type.FLING && mIsBeingDragged) {
-            GestureFling fling = (GestureFling) e;
-            mCurrentFlingAnim = new FlingAnimation(this, mContext)
-                    .setStartPositions((int) getX(), (int) getY())
-                    .setStartVelocities((int) fling.xVelocity, (int) fling.yVelocity);
-            mCurrentFlingAnim.start();
-            return true;
+    /**
+     * Method used to see whether an input gesture should be intercepted before sending to children.
+     * Normal case is that the container is currently being dragged so it should steal scrolls and
+     * flings.
+     * @param e The input gesture
+     * @return True to say the gesture has been consumed, false otherwise
+     */
+    protected boolean onInterceptGestureEvent(@NotNull GestureEvent e) {
+        if (mIsBeingDragged) {
+            if (e.type == GestureEvent.Type.SCROLL) {
+                GestureScroll scroll = (GestureScroll) e;
+                move(scroll.scrollX, scroll.scrollY);
+                return true;
+            }
+            if (e.type == GestureEvent.Type.FLING) {
+                GestureFling fling = (GestureFling) e;
+                mCurrentFlingAnim = new FlingAnimation(this, mContext)
+                        .setStartPositions((int) getX(), (int) getY())
+                        .setStartVelocities((int) fling.xVelocity, (int) fling.yVelocity);
+                mCurrentFlingAnim.start();
+                return true;
+            }
+
+            mIsBeingDragged = false;
         }
 
         return false;

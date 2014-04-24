@@ -17,19 +17,17 @@ import org.jetbrains.annotations.NotNull;
  */
 public class RootContainer extends Container {
     /**
-     * Calls {@link #RootContainer(android.content.Context, android.opengl.GLSurfaceView, float, float, float, float)}.
+     * Calls {@link #RootContainer(android.content.Context, android.opengl.GLSurfaceView, float, float)}.
      * Then adds a {@link com.nickstephen.gamelib.opengl.text.FPSMeter} to the container if the app
      * is in debug mode.
      * @param context A context
      * @param surface The surface which is being used to display the OpenGL
      * @param width The width of the container
      * @param height The height of the container
-     * @param parentOffsetX The offset of the container from its parent (x-axis)
-     * @param parentOffsetY The offset of the container from its parent (y-axis)
      * @param fontFile The filename of the font file to be used to initialise the
      *                 {@link com.nickstephen.gamelib.opengl.text.TextUtil} instance
      */
-    public RootContainer(@NotNull Context context, @NotNull GLSurfaceView surface, float width, float height, String fontFile) {
+    public RootContainer(@NotNull Context context, @NotNull GLSurfaceView surface, float width, float height, @NotNull String fontFile) {
         this(context, surface, width, height);
 
         if (!VersionControl.IS_RELEASE) {
@@ -45,8 +43,6 @@ public class RootContainer extends Container {
      * @param surface The surface which is being used to display the OpenGL
      * @param width The width of the container
      * @param height The height of the container
-     * @param parentOffsetX The offset of the container from its parent (x-axis)
-     * @param parentOffsetY The offset of the container from its parent (y-axis)
      */
     public RootContainer(@NotNull Context context, @NotNull GLSurfaceView surface, float width, float height) {
         super(context, null, width, height, 0, 0);
@@ -72,7 +68,17 @@ public class RootContainer extends Container {
         return 0;
     }
 
-    public boolean onGestureEvent(GestureEvent e) {
+    /**
+     * The start point for gesture inputs into the layout hierarchy. Use this method and only this
+     * method to input the gesture events!
+     *
+     * It converts the gesture's position from the Top-Left of the screen to the more OpenGL correct
+     * centre based position.
+     *
+     * @param e The input gesture
+     * @return True if the gesture was consumed, false otherwise
+     */
+    public boolean onGestureEvent(@NotNull GestureEvent e) {
         float relX = e.originalX - (getScreenWidth() / 2.0f);
         float relY = -(e.originalY - (getScreenHeight() / 2.0f));
 

@@ -119,7 +119,11 @@ public class GameLoop implements Runnable {
      * Write your own override method to handle user gesture events before the game logic is performed.
      * The return value determines whether to continue feeding gesture events before continuing on to
      * the rest of the tick method. i.e. If you ignored the gesture and want another one, return false.
-     * The default method just passes all events onto the RootContainer with no filtering.
+     *
+     * The default method first queries {@link #mFocusShape} for the gesture and then moves on to the
+     * active view in {@link com.nickstephen.gamelib.run.Game}. Overrides are encouraged to use a
+     * similar methodology or just filter out events and pass to the super implementation. (Not
+     * recommended to filter FINISH as it may mess with the {@link #mFocusShape})
      *
      * The method will never be called with a null input (if there are no more gestures in the queue).
      *
@@ -266,6 +270,13 @@ public class GameLoop implements Runnable {
         }
     }
 
+    /**
+     * Pass a Shape to the loop which should intercept the gestures before going to the RootContainer.
+     * Should be used on the first scroll gesture for moving shapes. Not only is it more efficient this
+     * way (as it doesn't have to step the layout to find the corresponding shape each time), but it's
+     * also necessary for fast scrolling as the gesture response can lag behind the user input.
+     * @param shape The Shape to cache
+     */
     public void setFocusShape(@NotNull Shape shape) {
         mFocusShape = shape;
     }
