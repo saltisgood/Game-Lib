@@ -43,6 +43,10 @@ public abstract class Game {
         return mActiveView;
     }
 
+    public void addGLThreadAction(@NotNull Runnable r) {
+        mActions.add(r);
+    }
+
     public Runnable getGLThreadAction() {
         if (mActions.size() > 0) {
             return mActions.remove(0);
