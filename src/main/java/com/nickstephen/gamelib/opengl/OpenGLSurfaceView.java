@@ -6,7 +6,9 @@ import android.support.v4.view.GestureDetectorCompat;
 import android.view.MotionEvent;
 
 import com.nickstephen.gamelib.opengl.gestures.GestureControl;
+import com.nickstephen.gamelib.opengl.gestures.GestureEvent;
 import com.nickstephen.gamelib.opengl.text.Text;
+import com.nickstephen.gamelib.run.Game;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -87,6 +89,11 @@ public class OpenGLSurfaceView extends GLSurfaceView {
             return mRenderer.onGestureEvent(event);
         } */
         mGestureDetector.onTouchEvent(event);
+
+        int action = event.getActionMasked();
+        if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) {
+            Game.getInstanceUnsafe().addInput(GestureEvent.construct(event, null, GestureEvent.Type.FINISH, 0f, 0f));
+        }
         //return super.onTouchEvent(event);
         return true;
     }

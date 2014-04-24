@@ -92,4 +92,9 @@ public class RootContainer extends Container {
 
         return onGestureEvent(e, relX, relY);
     }
+
+    @Override
+    public void setScrollable(boolean val) {
+        // RootContainer's can't scroll! Breaks glScissor for children.
+    }
 }

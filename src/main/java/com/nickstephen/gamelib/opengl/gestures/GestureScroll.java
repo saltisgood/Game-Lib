@@ -8,9 +8,13 @@ import org.jetbrains.annotations.NotNull;
  * Created by Nick Stephen on 24/04/2014.
  */
 public class GestureScroll extends GestureEvent {
-    GestureScroll(@NotNull MotionEvent e, @NotNull GestureEvent.Type t, float distX, float distY) {
+    public final float scrollX;
+    public final float scrollY;
+
+    GestureScroll(@NotNull MotionEvent e, @NotNull GestureEvent.Type t, float currentScrollX, float currentScrollY) {
         super(e, t);
 
-
+        scrollX = -currentScrollX;
+        scrollY = currentScrollY;
     }
 }

@@ -29,6 +29,8 @@ import org.jetbrains.annotations.Nullable;
  * @author Nick Stephen
  */
 public abstract class Shape implements ITouchL, IGestureL {
+    protected static final long UNSET_TIME = -1L;
+
     private static final int PFLAG_PREPRESSED = 0x02000000;
     private static final int PFLAG_PRESSED = 0x00004000;
 
@@ -39,6 +41,8 @@ public abstract class Shape implements ITouchL, IGestureL {
      */
     protected final float[] mScratch = new float[16];
     protected final int mTouchSlop;
+
+    protected long mGestureDownTime = UNSET_TIME;
 
     private final float[] mModelMatrix = new float[16];
 
@@ -297,14 +301,14 @@ public abstract class Shape implements ITouchL, IGestureL {
 
         switch (e.type) {
             case SCROLL:
-                if (!mClickable || mIsFixed) {
+                if (!mClickable || mIsFixed || mGestureDownTime != e.originalTime) {
                     return false;
                 } else {
                     // TODO: Do move
                     return true;
                 }
             case FLING:
-                if (!mClickable || mIsFixed) {
+                if (!mClickable || mIsFixed || mGestureDownTime != e.originalTime) {
                     return false;
                 } else {
                     // TODO: Do fling
@@ -330,6 +334,12 @@ public abstract class Shape implements ITouchL, IGestureL {
                 } else {
                     return false;
                 }
+            case DOWN:
+                mGestureDownTime = e.originalTime;
+                return false;
+            case FINISH:
+                mGestureDownTime = UNSET_TIME;
+                return false;
         }
 
         return false;

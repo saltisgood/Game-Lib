@@ -8,6 +8,8 @@ import android.view.MotionEvent;
 import com.nickstephen.gamelib.opengl.Quadrilateral;
 import com.nickstephen.gamelib.opengl.Shape;
 import com.nickstephen.gamelib.opengl.gestures.GestureEvent;
+import com.nickstephen.gamelib.opengl.gestures.GestureScroll;
+import com.nickstephen.lib.Twig;
 import com.nickstephen.lib.VersionControl;
 
 import org.jetbrains.annotations.NotNull;
@@ -285,9 +287,19 @@ public class Container extends Quadrilateral {
 
     @Override
     public boolean onGestureEvent(@NotNull GestureEvent e, float relativePosX, float relativePosY) {
-        if (!withinBounds(relativePosX, relativePosY, mTouchSlop)) {
+        if (e.type == GestureEvent.Type.FINISH) {
+            mGestureDownTime = UNSET_TIME;
+            mIsBeingDragged = false;
+        } else if (!withinBounds(relativePosX, relativePosY, mTouchSlop)) {
+            if (e.originalTime == mGestureDownTime) {
+                mGestureDownTime = UNSET_TIME;
+            }
             mIsBeingDragged = false;
             return false;
+        }
+
+        if (onInterceptGestureEvent(e)) {
+            return true;
         }
 
         relativePosX -= mParentOffsetX;
@@ -296,7 +308,7 @@ public class Container extends Quadrilateral {
         float childX = relativePosX - this.getX();
         float childY = relativePosY - this.getY();
 
-        if (!onInterceptGestureEvent(e, childX, childY)) {
+        //if (!onInterceptGestureEvent(e)) {
             for (Shape shape : mChildren) {
                 if (shape.onGestureEvent(e, childX, childY)) {
                     return true;
@@ -308,9 +320,22 @@ public class Container extends Quadrilateral {
                     return true;
                 }
             }
-        }
+        //}
 
-        // TODO: Scroll stuff
+        if (mIsScrollable && e.originalTime == mGestureDownTime) {
+            if (e.type == GestureEvent.Type.SCROLL) {
+                mIsBeingDragged = true;
+                GestureScroll scroll = (GestureScroll)e;
+                move(scroll.scrollX, scroll.scrollY);
+                return true;
+            } else if (e.type == GestureEvent.Type.FLING) {
+                mIsBeingDragged = false;
+                Twig.debug("Container", "Fling event detected!");
+                //TODO: Fling handling
+                return true;
+            }
+        }
+        // TODO: General gesture handling
 
         return false;
     }
@@ -373,7 +398,20 @@ public class Container extends Quadrilateral {
         return mVPMatrix;
     }
 
-    protected boolean onInterceptGestureEvent(GestureEvent e, float relX, float relY) {
+    protected boolean onInterceptGestureEvent(GestureEvent e) {
+        if (e.type == GestureEvent.Type.SCROLL && mIsBeingDragged && e.originalTime == mGestureDownTime) {
+            GestureScroll scroll = (GestureScroll) e;
+            move(scroll.scrollX, scroll.scrollY);
+            return true;
+        }
+        if (e.type == GestureEvent.Type.FLING && e.originalTime == mGestureDownTime && mIsBeingDragged) {
+            // TODO: Fling
+            return true;
+        }
+
+        if (e.type == GestureEvent.Type.DOWN) {
+            mGestureDownTime = e.originalTime;
+        }
         return false;
     }
 

@@ -28,7 +28,7 @@ public class GestureControl implements GestureDetector.OnGestureListener, Gestur
 
     @Override
     public boolean onDown(MotionEvent e) {
-        // Ignore for now
+        Game.getInstanceUnsafe().addInput(GestureEvent.construct(e, null, GestureEvent.Type.DOWN, 0f, 0f));
         return true;
     }
 

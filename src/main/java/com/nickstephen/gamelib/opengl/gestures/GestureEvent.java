@@ -13,6 +13,7 @@ public class GestureEvent {
         switch (t) {
             case SCROLL:
                 return new GestureScroll(e, t, param4, param5);
+            case FINISH:
             case DOWN:
             case FLING:
             case LONG_PRESS:
@@ -27,6 +28,8 @@ public class GestureEvent {
 
     public final Type type;
 
+    public final long originalTime;
+
     public final int pointerId;
 
     public final float originalX;
@@ -34,12 +37,13 @@ public class GestureEvent {
 
     protected GestureEvent(@NotNull MotionEvent e, @NotNull Type t) {
         type = t;
+        originalTime = e.getDownTime();
         pointerId = e.getPointerId(0);
         originalX = e.getX();
         originalY = e.getY();
     }
 
     public static enum Type {
-        DOWN, FLING, LONG_PRESS, SCROLL, SHOW_PRESS, SINGLE_TAP, DOUBLE_TAP
+        DOWN, FLING, LONG_PRESS, SCROLL, SHOW_PRESS, SINGLE_TAP, DOUBLE_TAP, FINISH
     }
 }
