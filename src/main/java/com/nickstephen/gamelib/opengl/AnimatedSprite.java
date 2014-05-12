@@ -51,6 +51,13 @@ public class AnimatedSprite extends Sprite {
         }
     }
 
+    public void gotoFrame(int frame) {
+        if (frame >= 0 && frame < mNumFrames && frame != mCurrentFrame) {
+            mCurrentFrame = frame;
+            setTextureCoords(mTextureRegion[mCurrentFrame]);
+        }
+    }
+
     public int getNumFrames() {
         return mNumFrames;
     }
