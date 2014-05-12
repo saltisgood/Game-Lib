@@ -12,6 +12,7 @@ import com.nickstephen.gamelib.opengl.Shape;
 import com.nickstephen.gamelib.opengl.gestures.GestureEvent;
 import com.nickstephen.gamelib.opengl.gestures.GestureFling;
 import com.nickstephen.gamelib.opengl.gestures.GestureScroll;
+import com.nickstephen.gamelib.opengl.interfaces.IContainerDraw;
 import com.nickstephen.gamelib.run.GameLoop;
 import com.nickstephen.lib.Twig;
 import com.nickstephen.lib.VersionControl;
@@ -41,7 +42,7 @@ import java.util.List;
  *
  * @author Nick Stephen
  */
-public class Container extends Quadrilateral {
+public class Container extends Quadrilateral implements IContainerDraw {
     protected final List<Container> mChildContainers;
     protected final List<Shape> mChildren;
 

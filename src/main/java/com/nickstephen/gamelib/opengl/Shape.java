@@ -12,6 +12,7 @@ import com.nickstephen.gamelib.opengl.gestures.GestureFling;
 import com.nickstephen.gamelib.opengl.gestures.GestureScroll;
 import com.nickstephen.gamelib.opengl.gestures.IGestures;
 import com.nickstephen.gamelib.opengl.gestures.IOnGestureL;
+import com.nickstephen.gamelib.opengl.interfaces.IDraw;
 import com.nickstephen.gamelib.opengl.layout.Container;
 import com.nickstephen.gamelib.opengl.program.GenericProgram;
 import com.nickstephen.gamelib.opengl.program.Program;
@@ -31,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * @author Nick Stephen
  */
-public abstract class Shape implements IGestures {
+public abstract class Shape implements IGestures, IDraw {
     protected final Program mProgram;
     /**
      * A 4x4 float matrix pre-allocated here and whose contents can not be trusted in between
