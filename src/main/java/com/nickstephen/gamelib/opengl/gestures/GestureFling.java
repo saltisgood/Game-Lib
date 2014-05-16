@@ -27,9 +27,9 @@ public class GestureFling extends GestureEvent {
         if (yVelocity > 0 && absY > absX) {
             direction = Direction.DOWN;
         } else if (xVelocity < 0 && absX > absY) {
-            direction = Direction.RIGHT;
-        } else if (xVelocity > 0 && absX > absY) {
             direction = Direction.LEFT;
+        } else if (xVelocity > 0 && absX > absY) {
+            direction = Direction.RIGHT;
         } else {
             direction = Direction.UP;
         }
