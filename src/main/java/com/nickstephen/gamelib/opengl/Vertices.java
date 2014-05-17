@@ -122,7 +122,6 @@ public class Vertices {
 
         int mvpMatricesHandle = GLES20.glGetUniformLocation(mProgram.getHandle(), UniformVariable.U_MVPMatrix.getName());
         GLES20.glUniformMatrix4fv(mvpMatricesHandle, mNumMVPMatrices, false, mvpMatrix, 0);
-        GLES20.glEnableVertexAttribArray(mvpMatricesHandle);
 
         // bind vertex position pointer
         mVertices.position(0);                         // Set Vertex Buffer to Position
@@ -133,7 +132,6 @@ public class Vertices {
         if (mUsesColour) {
             int colourHandle = GLES20.glGetUniformLocation(mProgram.getHandle(), UniformVariable.U_Colour.getName());
             GLES20.glUniform4fv(colourHandle, 1, mShape.getColour(), 0);
-            //GLES20.glEnableVertexAttribArray(colourHandle);
         }
 
         if (mUsesTexture) {
@@ -267,7 +265,14 @@ public class Vertices {
      * Perform any necessary disabling settings here
      */
     private void unbind() {
-        GLES20.glDisableVertexAttribArray(mTextureCoordinateHandle);
+        if (mUsesTextureCoords) {
+            GLES20.glDisableVertexAttribArray(mTextureCoordinateHandle);
+            Utilities.checkGlError("glDisableVertexAttribArray/TexCoord");
+        }
+        if (mUsesMVPIndex) {
+            GLES20.glDisableVertexAttribArray(mMVPIndexHandle);
+            Utilities.checkGlError("glDisableVertexAttribArray/MVPIndex");
+        }
     }
 
     /**

@@ -50,7 +50,7 @@ public class OpenGLSurfaceView extends GLSurfaceView {
     /**
      * Default initialisation. Use this if you don't have a new renderer to use.
      */
-    public void defaultInit() {
+    public void init() {
         this.setRenderer(mRenderer = new com.nickstephen.gamelib.opengl.Renderer(mContext, this));
     }
 
@@ -74,7 +74,9 @@ public class OpenGLSurfaceView extends GLSurfaceView {
     public void onPause() {
         Text.destroyInstance();
 
-        mRenderer.onDestroy();
+        if (mRenderer != null) {
+            mRenderer.onDestroy();
+        }
         super.onPause();
     }
 
