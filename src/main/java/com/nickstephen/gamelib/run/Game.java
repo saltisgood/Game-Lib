@@ -1,5 +1,7 @@
 package com.nickstephen.gamelib.run;
 
+import android.content.Context;
+
 import com.nickstephen.gamelib.opengl.OpenGLSurfaceView;
 import com.nickstephen.gamelib.opengl.Shape;
 import com.nickstephen.gamelib.opengl.gestures.GestureEvent;
@@ -29,6 +31,11 @@ public abstract class Game {
     private int mWidth, mHeight;
     private final List<Runnable> mActions = new LinkedList<Runnable>();
     private final List<GestureEvent> mInputs = new LinkedList<GestureEvent>();
+    protected Context mContext;
+
+    protected Game(@NotNull Context context) {
+        mContext = context;
+    }
 
     public void setSurface(@NotNull OpenGLSurfaceView surface) {
         mSurface = surface;
@@ -58,6 +65,18 @@ public abstract class Game {
         if (!consumeInputEvent(e)) {
             mInputs.add(e);
         }
+    }
+
+    public Context getContext() {
+        return mContext;
+    }
+
+    protected void setContext(@NotNull Context context) {
+        mContext = context;
+    }
+
+    public void releaseContext() {
+        mContext = null;
     }
 
     /**

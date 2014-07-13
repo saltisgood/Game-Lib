@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
  * {@link com.nickstephen.gamelib.opengl.text.Text#destroyInstance()} on pausing the GL Thread so
  * as not to crash on restart.
  *
- * Make sure to call the {@link #init(com.nickstephen.gamelib.opengl.Renderer)} or {@link #defaultInit()}
+ * Make sure to call the {@link #init(com.nickstephen.gamelib.opengl.Renderer)} or {@link #init()}
  * methods after construction and before use to set the renderer.
  * @author Nick Stephen
  */

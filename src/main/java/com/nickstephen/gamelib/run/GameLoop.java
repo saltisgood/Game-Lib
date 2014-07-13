@@ -6,10 +6,10 @@ import com.nickstephen.gamelib.anim.Animation;
 import com.nickstephen.gamelib.opengl.Shape;
 import com.nickstephen.gamelib.opengl.gestures.GestureEvent;
 import com.nickstephen.gamelib.opengl.layout.RootContainer;
+import com.nickstephen.gamelib.run.tasking.ITask;
 import com.nickstephen.lib.Twig;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,6 +43,7 @@ public class GameLoop implements Runnable {
     private boolean mStop = false;
     private int mTicks;
     private List<Animation> mAnimations;
+    private List<ITask> mTasks = new ArrayList<ITask>();
     private boolean mPause = true;
     private boolean mIsAlive = false;
     private Handler mHandler;
@@ -111,6 +112,7 @@ public class GameLoop implements Runnable {
             //noinspection StatementWithEmptyBody
             while ((e = Game.getInstanceUnsafe().popInput()) != null && !handleUserInput(e)) {}
         }
+        updateTasks();
         updateGameLogic();
         updateAnimations(now);
     }
@@ -138,6 +140,7 @@ public class GameLoop implements Runnable {
                 return false;
             }
 
+            // TODO: Should this change to (return mFocusShape.giveGestureEvent(e);)?
             if (mFocusShape.giveGestureEvent(e)) {
                 return true;
             }
@@ -156,6 +159,17 @@ public class GameLoop implements Runnable {
      */
     protected void updateGameLogic() {
 
+    }
+
+    private void updateTasks() {
+        for (int i = mTasks.size() - 1; i > 0; --i) {
+            ITask task = mTasks.get(i);
+
+            if (task.update()) {
+                task.end();
+                mTasks.remove(i);
+            }
+        }
     }
 
     /**
@@ -279,5 +293,15 @@ public class GameLoop implements Runnable {
      */
     public void setFocusShape(@NotNull Shape shape) {
         mFocusShape = shape;
+    }
+
+    public boolean addTask(@NotNull ITask task) {
+        if (!task.start()) {
+            return false;
+        }
+
+        mTasks.add(task);
+
+        return true;
     }
 }
