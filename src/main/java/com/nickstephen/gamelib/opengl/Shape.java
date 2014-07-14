@@ -29,6 +29,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
 
 /**
  * <p>The base class for everything displayed in the OpenGL environment. Equivalent to
@@ -359,6 +360,14 @@ public abstract class Shape implements IGestures, IDraw {
      */
     public @NotNull Program getProgram() {
         return mProgram;
+    }
+
+    public void removeFromParent() {
+        if (mParent != null) {
+            synchronized (mParent.getChildren()) {
+                mParent.getChildren().remove(this);
+            }
+        }
     }
 
     /**

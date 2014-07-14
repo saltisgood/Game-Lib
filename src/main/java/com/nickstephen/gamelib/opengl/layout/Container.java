@@ -168,7 +168,7 @@ public class Container extends Shape implements IContainerDraw {
      * @param projMatrix The projection matrix (passed unmodified from the renderer)
      * @param viewMatrix The view matrix (modified by containers to account for different offsets)
      */
-    public void draw(float[] projMatrix, float[] viewMatrix) {
+    public void draw(@NotNull float[] projMatrix, @NotNull float[] viewMatrix) {
         if (!VersionControl.IS_RELEASE) {
             Matrix.translateM(mScratch, 0, viewMatrix, 0, mParentOffsetX, mParentOffsetY, 0);
             System.arraycopy(mScratch, 0, mVPMatrix, 0, 16);
@@ -188,9 +188,11 @@ public class Container extends Shape implements IContainerDraw {
         GLES20.glEnable(GLES20.GL_SCISSOR_TEST);
         GLES20.glScissor(getAbsoluteBLCornerX(), getAbsoluteBLCornerY(), (int) mScreenWidth, (int) mScreenHeight);
 
-        len = mChildren.size();
-        for (int i = 0; i < len; i++) {
-            mChildren.get(i).draw(mVPMatrix);
+        synchronized (mChildren) {
+            len = mChildren.size();
+            for (int i = 0; i < len; i++) {
+                mChildren.get(i).draw(mVPMatrix);
+            }
         }
 
         GLES20.glDisable(GLES20.GL_SCISSOR_TEST);
