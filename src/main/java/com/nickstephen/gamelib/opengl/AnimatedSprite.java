@@ -22,23 +22,6 @@ public class AnimatedSprite extends Sprite {
         mNumFrames = numSpritesX * numSpritesY;
     }
 
-    @Override
-    protected @NotNull TextureRegion[] setupTextureRegion(@NotNull Bitmap bitmap, int spritesX, int spritesY) {
-        TextureRegion[] regions = new TextureRegion[spritesX * spritesY];
-
-        float texWidth = bitmap.getWidth(), texHeight = bitmap.getHeight();
-        float cellWidth = texWidth / (float) spritesX, cellHeight = texHeight / (float) spritesY;
-
-        for (int j = 0, c = 0; j < spritesY; j++) {
-            for (int i = 0; i < spritesX; i++) {
-                regions[c++] = new TextureRegion(texWidth, texHeight, i * cellWidth, j * cellHeight,
-                        cellWidth, cellHeight);
-            }
-        }
-
-        return regions;
-    }
-
     public void nextFrame(float percentage) {
         int nextFrame = (int)(percentage * mNumFrames);
         if (nextFrame >= (mNumFrames)) {
@@ -47,15 +30,23 @@ public class AnimatedSprite extends Sprite {
 
         if (nextFrame != mCurrentFrame) {
             mCurrentFrame = nextFrame;
-            setTextureCoords(mTextureRegion[mCurrentFrame]);
+            setTextureCoords(mTextureRegions[mCurrentFrame]);
         }
     }
 
     public void gotoFrame(int frame) {
         if (frame >= 0 && frame < mNumFrames && frame != mCurrentFrame) {
             mCurrentFrame = frame;
-            setTextureCoords(mTextureRegion[mCurrentFrame]);
+
+            if (mTextureRegions != null) {
+                setTextureCoords(mTextureRegions[mCurrentFrame]);
+            }
         }
+    }
+
+    @Override
+    protected void setTextureCoords(TextureRegion region) {
+        super.setTextureCoords(mTextureRegions[mCurrentFrame]);
     }
 
     public int getNumFrames() {

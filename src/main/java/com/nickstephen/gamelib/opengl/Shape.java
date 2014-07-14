@@ -1,12 +1,17 @@
 package com.nickstephen.gamelib.opengl;
 
 import android.content.Context;
+import android.content.res.AssetManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
 import android.view.ViewConfiguration;
 
 import com.nickstephen.gamelib.GeneralUtil;
 import com.nickstephen.gamelib.anim.FlingAnimation;
+import com.nickstephen.gamelib.opengl.bounds.Bounds;
+import com.nickstephen.gamelib.opengl.bounds.Default;
 import com.nickstephen.gamelib.opengl.gestures.GestureEvent;
 import com.nickstephen.gamelib.opengl.gestures.GestureFling;
 import com.nickstephen.gamelib.opengl.gestures.GestureScroll;
@@ -21,6 +26,9 @@ import com.nickstephen.gamelib.run.GameLoop;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.io.IOException;
+import java.io.InputStream;
 
 /**
  * <p>The base class for everything displayed in the OpenGL environment. Equivalent to
@@ -39,7 +47,6 @@ public abstract class Shape implements IGestures, IDraw {
      * method calls. Useful as a matrix whose contents are needed only briefly and repeatedly.
      */
     protected final float[] mScratch = new float[16];
-    protected final int mTouchSlop;
 
     private final float[] mModelMatrix = new float[16];
 
@@ -54,40 +61,17 @@ public abstract class Shape implements IGestures, IDraw {
 
     private float mAlpha = 1.0f;
     private float mAngle;
-    /**
-     * The baseline X position relative to the container
-     */
-    private float mBaseX;
-    /**
-     * The baseline Y position relative to the container
-     */
-    private float mBaseY;
+
+    protected Bounds mBoundsChecker;
 
     private boolean mClickable = true;
-    /**
-     * The rough distance to the bottom of the shape
-     */
-    private float mDown;
-    /**
-     * The rough distance to the left side of the shape
-     */
-    private float mLeft;
     private boolean mLongClickable = false;
     private boolean mModelMatrixInvalidated = true;
     private boolean mIsFixed = true;
     
     private Container mParent;
-    /**
-     * The rough distance to the right side of the shape
-     */
-    private float mRight;
     private GLSurfaceView mSurface;
-    private int mTextureId;
     protected final Context mContext;
-    /**
-     * The rough distance to the top of the shape
-     */
-    private float mUp;
 
     /**
      * Construct the shape with a {@link com.nickstephen.gamelib.opengl.program.GenericProgram} used
@@ -101,13 +85,13 @@ public abstract class Shape implements IGestures, IDraw {
 
         mContext = context;
 
-        mTouchSlop = ViewConfiguration.get(context).getScaledTouchSlop();
-
         mParent = parent;
 
         if (parent != null) {
             mSurface = parent.getSurface();
         }
+
+        mBoundsChecker = new Default(this);
     }
 
     /**
@@ -123,13 +107,13 @@ public abstract class Shape implements IGestures, IDraw {
         }
 
         mContext = context;
-
-        mTouchSlop = ViewConfiguration.get(context).getScaledTouchSlop();
         mParent = parent;
 
         if (parent != null) {
             mSurface = parent.getSurface();
         }
+
+        mBoundsChecker = new Default(this);
     }
 
     public float getAlpha() {
@@ -225,13 +209,13 @@ public abstract class Shape implements IGestures, IDraw {
 
     /**
      * Get the model matrix for this shape. The base implementation is simply a translation matrix
-     * based on the {@link #mBaseX} and {@link #mBaseY} positions, (z ignored).
+     * based on the x and y positions, (z ignored).
      * @return The float matrix
      */
     public @NotNull float[] getModelMatrix() {
         if (mModelMatrixInvalidated) {
             Matrix.setIdentityM(mModelMatrix, 0);
-            Matrix.translateM(mModelMatrix, 0, mBaseX, mBaseY, 0);
+            Matrix.translateM(mModelMatrix, 0, mBoundsChecker.getX(), mBoundsChecker.getY(), 0);
             //Matrix.rotateM(mModelMatrix, 0, mAngle, 0, 0, -1.0f);
             GeneralUtil.rotateM(mModelMatrix, 0, mAngle, 0, 0, -1.0f);
 
@@ -246,7 +230,7 @@ public abstract class Shape implements IGestures, IDraw {
      * @param dy The y offset relative to its old position (pixels)
      */
     public void move(float dx, float dy) {
-        moveTo(mBaseX + dx, mBaseY + dy);
+        moveTo(mBoundsChecker.getX() + dx, mBoundsChecker.getY() + dy);
     }
 
     /**
@@ -255,8 +239,8 @@ public abstract class Shape implements IGestures, IDraw {
      * @param newY The new y offset relative to its parent
      */
     public void moveTo(float newX, float newY) {
-        mBaseX = newX;
-        mBaseY = newY;
+        mBoundsChecker.setX(newX);
+        mBoundsChecker.setY(newY);
 
         mModelMatrixInvalidated = true;
     }
@@ -288,7 +272,7 @@ public abstract class Shape implements IGestures, IDraw {
                 if (mClickable && !mIsFixed) {
                     GestureFling fling = (GestureFling) e;
                     mCurrentFlingAnim = new FlingAnimation(this, mContext)
-                            .setStartPositions((int) mBaseX, (int) mBaseY)
+                            .setStartPositions((int) mBoundsChecker.getX(), (int) mBoundsChecker.getY())
                             .setStartVelocities((int) fling.xVelocity, (int) fling.yVelocity);
                     mCurrentFlingAnim.start();
                     return true;
@@ -385,17 +369,6 @@ public abstract class Shape implements IGestures, IDraw {
         mSurface.removeCallbacks(action);
     }
 
-    /**
-     * Resize the shape by a set ratio on all sides
-     * @param ratio The ratio to multiply the current side lengths by
-     */
-    public void resize(float ratio) {
-        mLeft *= ratio;
-        mRight *= ratio;
-        mUp *= ratio;
-        mDown *= ratio;
-    }
-
     public void setFixed(boolean fixed) {
         mIsFixed = fixed;
     }
@@ -435,28 +408,6 @@ public abstract class Shape implements IGestures, IDraw {
     }
 
     /**
-     * Set the size of the shape as a radius around the centre
-     * @param radius The new radius of the shape
-     */
-    public void setSize(float radius) {
-        mLeft = mRight = mUp = mDown = radius;
-    }
-
-    /**
-     * Set the individual sizes of the distance to each side of the shape from the centre
-     * @param left The distance to the left side
-     * @param right The distance to the right side
-     * @param up The distance to the top
-     * @param down The distance to the bottom
-     */
-    public void setSize(float left, float right, float up, float down) {
-        mLeft = left;
-        mRight = right;
-        mUp = up;
-        mDown = down;
-    }
-
-    /**
      * Get the surface associated with this shape. This is a non-null call as long as the root container
      * immediately set its surface (which it should since it's in the constructor).
      * @return The GLSurfaceView that hosts the OpenGL display
@@ -472,24 +423,6 @@ public abstract class Shape implements IGestures, IDraw {
      */
     public void setSurface(@NotNull GLSurfaceView surface) {
         mSurface = surface;
-    }
-
-    /**
-     * Get the texture id associated with this shape. Sub-classes aren't required to uses textures, this
-     * is just a mechanism for allowing them to all have a texture id if necessary.
-     * @return The texture id if it's set
-     */
-    public int getTextureId() {
-        return mTextureId;
-    }
-
-    /**
-     * Set the texture id associated with this shape.
-     * @see #getTextureId()
-     * @param texId The id of the texture used in this shape
-     */
-    protected final void setTextureId(int texId) {
-        mTextureId = texId;
     }
 
     /**
@@ -513,28 +446,7 @@ public abstract class Shape implements IGestures, IDraw {
      * @return True if inside (or nearly inside) the container, false otherwise
      */
     public boolean withinBounds(float posX, float posY, float touchSlop) {
-        float diff;
-        if ((diff = mBaseX - posX) < 0.0f) {
-            if (-diff > (mRight + touchSlop)) {
-                return false;
-            }
-        } else if (diff > 0.0f) {
-            if (diff > (mLeft + touchSlop)) {
-                return false;
-            }
-        }
-
-        if ((diff = mBaseY - posY) < 0.0f) {
-            if (-diff > (mUp + touchSlop)) {
-                return false;
-            }
-        } else if (diff > 0.0f) {
-            if (diff > (mDown + touchSlop)) {
-                return false;
-            }
-        }
-
-        return true;
+        return mBoundsChecker.withinBounds(posX, posY, touchSlop);
     }
 
     /**
@@ -542,7 +454,7 @@ public abstract class Shape implements IGestures, IDraw {
      * @return X offset (pixels)
      */
     public float getX() {
-        return mBaseX;
+        return mBoundsChecker.getX();
     }
 
     /**
@@ -550,6 +462,6 @@ public abstract class Shape implements IGestures, IDraw {
      * @return Y offset (pixels)
      */
     public float getY() {
-        return mBaseY;
+        return mBoundsChecker.getY();
     }
 }

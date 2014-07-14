@@ -3,6 +3,7 @@ package com.nickstephen.gamelib.opengl;
 import android.content.Context;
 import android.opengl.GLES20;
 
+import com.nickstephen.gamelib.opengl.bounds.Radial;
 import com.nickstephen.gamelib.opengl.layout.Container;
 
 import org.jetbrains.annotations.NotNull;
@@ -17,12 +18,25 @@ import org.jetbrains.annotations.Nullable;
  * @author Nick Stephen
  */
 public class Polygon extends Shape {
+    private static final int CIRCLE_SIDE_NO = 100;
+
+    public static Polygon createCircle(@NotNull Context context, @Nullable Container parent, float radius) {
+        return new Polygon(context, parent, 0, 0, radius, 0, CIRCLE_SIDE_NO, color);
+    }
+
+    public static Polygon createTriangle(@NotNull Context context, @Nullable Container parent, float radius) {
+        return new Polygon(context, parent, 0, 0, radius, 0, 3, color);
+    }
+
+    public static Polygon createSquare(@NotNull Context context, @Nullable Container parent, float radius) {
+        return new Polygon(context, parent, 0, 0, radius, 0, 4, color);
+    }
+
     // number of coordinates per vertex in this array
     private static final int COORDS_PER_VERTEX = 2;
 
     private static final float color[] = { 0.63671875f, 0.76953125f, 0.22265625f, 0.0f };
     private final int mSideCount;
-    private float mRadius;
 
     public Polygon(@NotNull Context context, @Nullable Container parent, float posX, float posY, float radius, int numberOfSides) {
         this(context, parent, posX, posY, radius, 0, numberOfSides, color);
@@ -45,11 +59,8 @@ public class Polygon extends Shape {
     public Polygon(@NotNull Context context, @Nullable Container parent, float posX, float posY, float radius, float angle, int numberOfSides, float[] colour) {
         super(context, parent);
 
-        mRadius = radius;
-        setSize(radius);
-
+        mBoundsChecker = new Radial(this).setWidth(radius);
         mSideCount = numberOfSides;
-
 
         if (colour.length != 4) {
             throw new RuntimeException("Colour vector must be 4 long");
@@ -76,28 +87,19 @@ public class Polygon extends Shape {
         this(context, parent, posX, posY, radius, angle, numberOfSides, color);
     }
 
-    /**
-     * Encapsulates the OpenGL ES instructions for drawing this shape.
-     *
-     * @param vpMatrix - The View Projection matrix with which to draw this shape.
-     */
-    /*public void draw(@NotNull float[] vpMatrix) {
-        mVertices.draw(vpMatrix);
-    } */
-
     private void setVertices() {
         // Calculate the vertex positions
         //float x = (float)Math.cos(mAngle) * mRadius;
         //float y = (float)Math.sin(mAngle) * mRadius;
-        float x = mRadius, y = 0;
+        float x = mBoundsChecker.getWidth(), y = 0;
         float[] buff = new float[COORDS_PER_VERTEX * (mSideCount + 1)];
 
         float theta = 2.0f * 3.14159f / (float) mSideCount;
         float tanFactor = (float) Math.tan(theta);
         float radialFactor = (float) Math.cos(theta);
 
-        buff[0] = 0;
-        buff[1] = 0;
+        buff[0] = 0.f;
+        buff[1] = 0.f;
         for (int i = 1; i < mSideCount + 1; i++) {
             buff[COORDS_PER_VERTEX * i] = x;
             buff[COORDS_PER_VERTEX * i + 1] = y;

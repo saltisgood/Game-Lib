@@ -4,11 +4,13 @@ import android.content.Context;
 import android.opengl.GLES20;
 import android.opengl.Matrix;
 import android.view.MotionEvent;
+import android.view.ViewConfiguration;
 
 import com.nickstephen.gamelib.anim.FlingAnimation;
 import com.nickstephen.gamelib.anim.TranslationAnimation;
 import com.nickstephen.gamelib.opengl.Quadrilateral;
 import com.nickstephen.gamelib.opengl.Shape;
+import com.nickstephen.gamelib.opengl.Vertices;
 import com.nickstephen.gamelib.opengl.gestures.GestureEvent;
 import com.nickstephen.gamelib.opengl.gestures.GestureFling;
 import com.nickstephen.gamelib.opengl.gestures.GestureScroll;
@@ -42,11 +44,13 @@ import java.util.List;
  *
  * @author Nick Stephen
  */
-public class Container extends Quadrilateral implements IContainerDraw {
+public class Container extends Shape implements IContainerDraw {
     protected final List<Container> mChildContainers;
     protected final List<Shape> mChildren;
 
     protected final float[] mVPMatrix = new float[16];
+
+    protected final float mTouchSlop;
 
     private int mBottom;
     private float mBoundsHeight;
@@ -72,7 +76,7 @@ public class Container extends Quadrilateral implements IContainerDraw {
      * @param parentOffsetY The relative y offset of the centre of this container from the parent container
      */
     public Container(@NotNull Context context, @Nullable Container parent, float width, float height, float parentOffsetX, float parentOffsetY) {
-        super(context, parent, 0.0f, 0.0f, width, height);
+        super(context, parent);
 
         mChildren = new ArrayList<Shape>(); // Initialise list of child shapes (not containers!)
         mChildContainers = new ArrayList<Container>(); // Initialise list of child containers (not regular shapes!)
@@ -82,6 +86,15 @@ public class Container extends Quadrilateral implements IContainerDraw {
         setScreenSize(width, height); // Set the screen size and initialise some other fields
 
         mColour = new float[]{1.0f, 0, 0, 1.0f}; // Set the bounding box colour to be red
+
+        mTouchSlop = ViewConfiguration.get(context).getScaledTouchSlop();
+
+        mVertices = new Vertices(this, 4, 0, GLES20.GL_LINE_LOOP);
+
+        mBoundsChecker = new com.nickstephen.gamelib.opengl.bounds.Quadrilateral(this)
+                .setWidth(width).setHeight(height);
+
+        moveTo(parentOffsetX, parentOffsetY);
     }
 
     /**
@@ -257,7 +270,6 @@ public class Container extends Quadrilateral implements IContainerDraw {
      */
     @Override
     public void move(float dx, float dy) {
-
         if (mInfiniteBounds) {
             super.move(dx, dy);
             return;

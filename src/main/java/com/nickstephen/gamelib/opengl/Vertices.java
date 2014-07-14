@@ -137,7 +137,7 @@ public class Vertices {
         if (mUsesTexture) {
             int textureUniformHandle = GLES20.glGetUniformLocation(mProgram.getHandle(), UniformVariable.U_Texture.getName());
             GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
-            GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, mShape.getTextureId());
+            GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, ((TexturedShape) mShape).getTextureId());
             GLES20.glUniform1i(textureUniformHandle, 0);
         }
 

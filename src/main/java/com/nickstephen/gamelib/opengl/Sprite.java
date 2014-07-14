@@ -6,6 +6,8 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.opengl.GLES20;
 
+import com.nickstephen.gamelib.opengl.bounds.*;
+import com.nickstephen.gamelib.opengl.bounds.Quadrilateral;
 import com.nickstephen.gamelib.opengl.layout.Container;
 import com.nickstephen.gamelib.opengl.program.SpriteProgram;
 
@@ -17,51 +19,25 @@ import java.io.InputStream;
 /**
  * Created by Nick Stephen on 12/03/14.
  */
-public class Sprite extends Quadrilateral {
-    protected TextureRegion[] mTextureRegion;
-
+public class Sprite extends TexturedShape {
+    protected static final int NUM_SIDES = 4; 
+    
     public Sprite(@NotNull Context context, @NotNull Container parent, @NotNull String textureFile, float width, float height) {
         this(context, parent, textureFile, width, height, 1, 1);
     }
 
     protected Sprite(@NotNull Context context, @NotNull Container parent, @NotNull String textureFile,
                      float width, float height, int spritesX, int spritesY) {
-        super(context, parent, new SpriteProgram(), 0, 0, width, height);
+        super(context, parent, new SpriteProgram());
 
-        AssetManager assets = context.getAssets();
-        InputStream is;
-        try {
-            is = assets.open(textureFile);
-        } catch (IOException e) {
-            return;
-        }
-
-        Bitmap raw = BitmapFactory.decodeStream(is);
-
-        try {
-            is.close();
-        } catch (IOException e) {
-            return;
-        }
-
-        setTextureId(TextureHelper.loadTexture(raw));
-
-        mTextureRegion = setupTextureRegion(raw, spritesX, spritesY);
-        raw.recycle();
-
-        setTextureCoords(mTextureRegion[0]);
-        setIndices();
-    }
-
-    protected @NotNull TextureRegion[] setupTextureRegion(@NotNull Bitmap bitmap, int spritesX, int spritesY) {
-        TextureRegion[] region = new TextureRegion[1];
-        region[0] = new TextureRegion(bitmap.getWidth(), bitmap.getHeight(), 0, 0, bitmap.getWidth(), bitmap.getHeight());
-        return region;
-    }
-
-    @Override
-    protected void setupVertices() {
         mVertices = new Vertices(this, 4, 6, GLES20.GL_TRIANGLES);
+        mBoundsChecker = new Quadrilateral(this).setWidth(width).setHeight(height);
+
+        setTextureName(textureFile);
+        setTextureDimensions(spritesX, spritesY);
+
+        setIndices();
+        setVertices();
     }
 
     protected void setIndices() {
@@ -75,6 +51,25 @@ public class Sprite extends Quadrilateral {
         mVertices.setIndices(indices, 0, 6);
     }
 
+    protected void setVertices() {
+        float[] vertexMatrix = new float[NUM_SIDES * Vertices.POSITION_CNT_2D];
+
+        vertexMatrix[0] = mBoundsChecker.getWidth() / -2.0f;
+        vertexMatrix[1] = mBoundsChecker.getHeight() / 2.0f;
+
+        vertexMatrix[2] = mBoundsChecker.getWidth() / 2.0f;
+        vertexMatrix[3] = mBoundsChecker.getHeight() / 2.0f;
+
+        vertexMatrix[4] = mBoundsChecker.getWidth() / 2.0f;
+        vertexMatrix[5] = mBoundsChecker.getHeight() / -2.0f;
+
+        vertexMatrix[6] = mBoundsChecker.getWidth() / -2.0f;
+        vertexMatrix[7] = mBoundsChecker.getHeight() / -2.0f;
+
+        mVertices.setVertices(vertexMatrix);
+    }
+
+    @Override
     protected void setTextureCoords(TextureRegion region) {
         float[] coords = mVertices.getTextureCoords();
 

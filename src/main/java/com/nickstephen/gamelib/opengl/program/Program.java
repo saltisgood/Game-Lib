@@ -13,13 +13,18 @@ import org.jetbrains.annotations.Nullable;
  * @author Nick Stephen
  */
 public abstract class Program {
-
     private AttrVariable[] mAttrVariables;
+
     private int mFragmentShaderHandle;
+    private String mFragmentShaderCode;
+
+    private int mVertexShaderHandle;
+    private String mVertexShaderCode;
+
     private boolean mInitialized;
     private int mProgramHandle;
     private UniformVariable[] mUniformVariables;
-    private int mVertexShaderHandle;
+
 
     public Program() {
         mInitialized = false;
@@ -41,7 +46,22 @@ public abstract class Program {
      * @return The handle to the OpenGL program
      */
     public int getHandle() {
+        if (!mInitialized) {
+            setup();
+        }
+
         return mProgramHandle;
+    }
+
+    private void setup() {
+        mVertexShaderHandle = Utilities.loadShader(GLES20.GL_VERTEX_SHADER, mVertexShaderCode);
+        mFragmentShaderHandle = Utilities.loadShader(GLES20.GL_FRAGMENT_SHADER, mFragmentShaderCode);
+
+        mProgramHandle = Utilities.createProgram(mVertexShaderHandle, mFragmentShaderHandle, mAttrVariables);
+
+        Utilities.checkGlError("Create program");
+
+        mInitialized = true;
     }
 
     public abstract void init();
@@ -60,13 +80,8 @@ public abstract class Program {
                      @NotNull UniformVariable[] uniformVariables) {
         mUniformVariables = uniformVariables;
         mAttrVariables = attrVariables;
-
-        mVertexShaderHandle = Utilities.loadShader(GLES20.GL_VERTEX_SHADER, vertexShaderCode);
-        mFragmentShaderHandle = Utilities.loadShader(GLES20.GL_FRAGMENT_SHADER, fragmentShaderCode);
-
-        mProgramHandle = Utilities.createProgram(mVertexShaderHandle, mFragmentShaderHandle, attrVariables);
-
-        mInitialized = true;
+        mVertexShaderCode = vertexShaderCode;
+        mFragmentShaderCode = fragmentShaderCode;
     }
 
     /**

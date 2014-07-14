@@ -162,7 +162,7 @@ public class GameLoop implements Runnable {
     }
 
     private void updateTasks() {
-        for (int i = mTasks.size() - 1; i > 0; --i) {
+        for (int i = mTasks.size() - 1; i >= 0; --i) {
             ITask task = mTasks.get(i);
 
             if (task.update()) {
