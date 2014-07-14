@@ -72,11 +72,16 @@ public class OpenGLSurfaceView extends GLSurfaceView {
      */
     @Override
     public void onPause() {
-        Text.destroyInstance();
-
         if (mRenderer != null) {
             mRenderer.onDestroy();
+
+            while (mRenderer.hasView()) {
+                Thread.yield();
+            }
         }
+
+        Text.destroyInstance();
+
         super.onPause();
     }
 

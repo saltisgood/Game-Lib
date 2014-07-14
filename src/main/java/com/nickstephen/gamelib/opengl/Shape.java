@@ -1,12 +1,8 @@
 package com.nickstephen.gamelib.opengl;
 
 import android.content.Context;
-import android.content.res.AssetManager;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
-import android.view.ViewConfiguration;
 
 import com.nickstephen.gamelib.GeneralUtil;
 import com.nickstephen.gamelib.anim.FlingAnimation;
@@ -19,17 +15,12 @@ import com.nickstephen.gamelib.opengl.gestures.IGestures;
 import com.nickstephen.gamelib.opengl.gestures.IOnGestureL;
 import com.nickstephen.gamelib.opengl.interfaces.IDraw;
 import com.nickstephen.gamelib.opengl.layout.Container;
-import com.nickstephen.gamelib.opengl.program.GenericProgram;
 import com.nickstephen.gamelib.opengl.program.Program;
 import com.nickstephen.gamelib.opengl.gestures.IOnClickL;
 import com.nickstephen.gamelib.run.GameLoop;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.List;
 
 /**
  * <p>The base class for everything displayed in the OpenGL environment. Equivalent to
@@ -75,14 +66,13 @@ public abstract class Shape implements IGestures, IDraw {
     protected final Context mContext;
 
     /**
-     * Construct the shape with a {@link com.nickstephen.gamelib.opengl.program.GenericProgram} used
+     * Construct the shape with a {@link com.nickstephen.gamelib.opengl.program.Program.GenericProgram} used
      * as the program.
      * @param context A context
      * @param parent A possible container
      */
     public Shape(@NotNull Context context, @Nullable Container parent) {
-        mProgram = new GenericProgram();
-        mProgram.init();
+        mProgram = Program.GenericProgram.create();
 
         mContext = context;
 
@@ -103,9 +93,6 @@ public abstract class Shape implements IGestures, IDraw {
      */
     public Shape(@NotNull Context context, @Nullable Container parent, @NotNull Program program) {
         mProgram = program;
-        if (!mProgram.isInitialized()) {
-            mProgram.init();
-        }
 
         mContext = context;
         mParent = parent;
@@ -191,7 +178,7 @@ public abstract class Shape implements IGestures, IDraw {
      * <strong>Don't release shared resources or you'll get crashes!</strong>
      */
     public void destroy() {
-        mProgram.delete();
+        mProgram.release();
     }
 
     /**

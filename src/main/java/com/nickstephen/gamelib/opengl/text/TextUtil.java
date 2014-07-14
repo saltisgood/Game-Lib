@@ -13,7 +13,6 @@ import com.nickstephen.gamelib.opengl.SpriteHelper;
 import com.nickstephen.gamelib.opengl.TextureHelper;
 import com.nickstephen.gamelib.opengl.TextureRegion;
 import com.nickstephen.gamelib.opengl.Utilities;
-import com.nickstephen.gamelib.opengl.program.BatchTextProgram;
 import com.nickstephen.gamelib.opengl.program.Program;
 
 /**
@@ -65,6 +64,7 @@ class TextUtil {
      * and whatnot!
      */
     static void destroyInstance() {
+        sInstance.mProgram.release();
         sInstance = null;
     }
 
@@ -117,8 +117,7 @@ class TextUtil {
      * @param file The filename of the font file to use to load the font
      */
     private TextUtil(AssetManager assets, String file) {
-        mProgram = new BatchTextProgram();
-        mProgram.init();
+        mProgram = Program.BatchTextProgram.create();
 
         mColorHandle = GLES20.glGetUniformLocation(mProgram.getHandle(), "u_Color");
         Utilities.checkGlError("glGetUniformLocation");

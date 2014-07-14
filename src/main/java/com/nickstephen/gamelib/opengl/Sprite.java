@@ -1,20 +1,13 @@
 package com.nickstephen.gamelib.opengl;
 
 import android.content.Context;
-import android.content.res.AssetManager;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.opengl.GLES20;
 
-import com.nickstephen.gamelib.opengl.bounds.*;
 import com.nickstephen.gamelib.opengl.bounds.Quadrilateral;
 import com.nickstephen.gamelib.opengl.layout.Container;
-import com.nickstephen.gamelib.opengl.program.SpriteProgram;
+import com.nickstephen.gamelib.opengl.program.Program;
 
 import org.jetbrains.annotations.NotNull;
-
-import java.io.IOException;
-import java.io.InputStream;
 
 /**
  * Created by Nick Stephen on 12/03/14.
@@ -28,7 +21,7 @@ public class Sprite extends TexturedShape {
 
     protected Sprite(@NotNull Context context, @NotNull Container parent, @NotNull String textureFile,
                      float width, float height, int spritesX, int spritesY) {
-        super(context, parent, new SpriteProgram());
+        super(context, parent, Program.SpriteProgram.create());
 
         mVertices = new Vertices(this, 4, 6, GLES20.GL_TRIANGLES);
         mBoundsChecker = new Quadrilateral(this).setWidth(width).setHeight(height);

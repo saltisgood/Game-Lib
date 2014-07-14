@@ -11,6 +11,10 @@ import android.opengl.GLUtils;
  * @author Nick Stephen
  */
 public class TextureHelper {
+    public static class Manager {
+
+    }
+
     private TextureHelper() {} // Don't use
 
     /**

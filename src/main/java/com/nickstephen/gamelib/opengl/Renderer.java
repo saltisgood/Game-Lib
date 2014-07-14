@@ -135,15 +135,9 @@ public class Renderer implements GLSurfaceView.Renderer {
 
     public void onDestroy() {
         Game.getInstanceUnsafe().destroy();
-        /* if (mContentContainer != null) {
-            final Shape shape = mContentContainer;
-            mSurface.queueEvent(new Runnable() {
-                @Override
-                public void run() {
-                    shape.destroy();
-                }
-            });
-            mContentContainer = null;
-        } */
+    }
+
+    public boolean hasView() {
+        return Game.getInstanceUnsafe().getActiveView() != null;
     }
 }

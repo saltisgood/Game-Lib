@@ -3,12 +3,11 @@ package com.nickstephen.gamelib.opengl.text;
 import android.content.Context;
 import android.opengl.Matrix;
 
-import com.nickstephen.gamelib.opengl.Shape;
 import com.nickstephen.gamelib.opengl.SpriteHelper;
 import com.nickstephen.gamelib.opengl.TextureRegion;
 import com.nickstephen.gamelib.opengl.TexturedShape;
 import com.nickstephen.gamelib.opengl.layout.Container;
-import com.nickstephen.gamelib.opengl.program.BatchTextProgram;
+import com.nickstephen.gamelib.opengl.program.Program;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -62,7 +61,7 @@ public class Text extends TexturedShape {
      *                 folder)
      */
     public Text(@NotNull Context context, @NotNull Container parent, @NotNull String fontFile) {
-        super(context, parent, new BatchTextProgram());
+        super(context, parent, Program.BatchTextProgram.create());
 
         this.setColour(defColour);
 
