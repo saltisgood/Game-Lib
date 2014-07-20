@@ -36,6 +36,7 @@ public class Vertices {
     protected final boolean mUsesMVPIndex;
     protected final boolean mUsesTexture;
     protected final boolean mUsesTextureCoords;
+    protected final boolean mUsesChannelBalance;
     protected final int mVertexStride;
 
     private final ShortBuffer mIndices;
@@ -79,6 +80,11 @@ public class Vertices {
         mUsesTextureCoords = mProgram.usesVariable(AttrVariable.A_TexCoordinate);
         mUsesMVPIndex = mProgram.usesVariable(AttrVariable.A_MVPMatrixIndex);
         mUsesAlpha = mProgram.usesVariable(UniformVariable.U_Alpha);
+        mUsesChannelBalance = mProgram.usesVariable(UniformVariable.U_ChannelBalance);
+
+        if (mUsesChannelBalance && !mUsesMVPIndex) {
+            throw new RuntimeException("Not yet supported!"); //TODO: Add this
+        }
 
         mVertexStride = mPositionCount +
                 (mUsesMVPIndex ? MVP_MATRIX_INDEX_CNT : 0) +
@@ -137,7 +143,7 @@ public class Vertices {
         if (mUsesTexture) {
             int textureUniformHandle = GLES20.glGetUniformLocation(mProgram.getHandle(), UniformVariable.U_Texture.getName());
             GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
-            GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, ((TexturedShape) mShape).getTextureId());
+            GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, mShape.getTextureId());
             GLES20.glUniform1i(textureUniformHandle, 0);
         }
 
@@ -155,6 +161,12 @@ public class Vertices {
         if (mUsesAlpha) {
             int alphaHandle = GLES20.glGetUniformLocation(mProgram.getHandle(), UniformVariable.U_Alpha.getName());
             GLES20.glUniform1f(alphaHandle, mShape.getAlpha());
+        }
+
+        if (mUsesChannelBalance) {
+            int channelHandle = GLES20.glGetUniformLocation(mProgram.getHandle(), UniformVariable.U_ChannelBalance.getName());
+            GLES20.glUniform4fv(channelHandle, mNumMVPMatrices, mShape.getChannel(), 0);
+            //GLES20.glUniform4fv(channelHandle, 1, new float[] { 1.f, 0.f, 0.f, 0.f }, 0);
         }
 
         // bind MVP Matrix index position handle
@@ -213,7 +225,7 @@ public class Vertices {
             throw new UnsupportedOperationException("Program doesn't use MVP indices!");
         }
         mMVPIndices = indices;
-        resetFloatBuffer();
+        //resetFloatBuffer();
     }
 
     /**

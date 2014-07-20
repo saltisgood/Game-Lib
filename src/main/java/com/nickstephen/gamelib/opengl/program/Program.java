@@ -3,6 +3,7 @@ package com.nickstephen.gamelib.opengl.program;
 import android.opengl.GLES20;
 
 import com.nickstephen.gamelib.opengl.Utilities;
+import com.nickstephen.gamelib.opengl.interfaces.IDisposable;
 import com.nickstephen.gamelib.util.Pair;
 
 import org.jetbrains.annotations.NotNull;
@@ -18,7 +19,60 @@ import java.util.Map;
  * A class used to abstract and help with the program concept in OpenGL.
  * @author Nick Stephen
  */
-public class Program {
+public class Program implements IDisposable {
+    public static class TestTextProgram {
+        private static final AttrVariable[] programVariables = {
+                AttrVariable.A_Position, AttrVariable.A_TexCoordinate, AttrVariable.A_MVPMatrixIndex
+        };
+
+        private static final UniformVariable[] uniVariables = {
+                UniformVariable.U_MVPMatrix, UniformVariable.U_Texture,
+                UniformVariable.U_ChannelBalance, UniformVariable.U_Colour
+        };
+
+        private static final String vertexShaderCode =
+                "uniform mat4 u_MVPMatrix[24];      \n"     // An array representing the combined
+                + "uniform vec4 u_Channel[24];"
+                        // model/view/projection matrices for each sprite
+
+                        + "attribute float a_MVPMatrixIndex; \n"	// The index of the MVPMatrix of the particular sprite
+                        + "attribute vec4 a_Position;     \n"     // Per-vertex position information we will pass in.
+                        + "attribute vec2 a_TexCoordinate;\n"     // Per-vertex texture coordinate information we will pass in
+
+                        + "varying vec2 v_TexCoordinate;  \n"   // This will be passed into the fragment shader.
+                        + "varying vec4 v_Channel;"
+                        + "void main()                    \n"     // The entry point for our vertex shader.
+                        + "{                              \n"
+                        + "   int mvpMIndex = int(a_MVPMatrixIndex); \n"
+                        + "   v_TexCoordinate = a_TexCoordinate; \n"
+                        + "v_Channel = u_Channel[mvpMIndex];"
+                        + "   gl_Position = u_MVPMatrix[mvpMIndex]   \n"     // gl_Position is a special variable used to store the final position.
+                        + "               * a_Position;   \n"     // Multiply the vertex by the matrix to get the final point in
+                        // normalized screen coordinates.
+                        + "}                              \n";
+
+
+        private static final String fragmentShaderCode =
+                "uniform sampler2D u_Texture;       \n"    // The input texture.
+                        +	"precision mediump float;       \n"     // Set the default precision to medium. We don't need as high of a
+                        // precision in the fragment shader.
+                        + "varying vec2 v_TexCoordinate;  \n" // Interpolated texture coordinate per fragment.
+                        + "varying vec4 v_Channel;"
+                        + "uniform vec4 u_Color;"
+
+                        + "void main()                    \n"     // The entry point for our fragment shader.
+                        + "{                              \n"
+                            + "gl_FragColor = vec4(u_Color.r, u_Color.g, u_Color.b, clamp(dot(texture2D(u_Texture, v_TexCoordinate), v_Channel), 0.0, 1.0) * u_Color.a);"
+                        + "}                             \n";
+
+
+        private TestTextProgram() {}
+
+        public static Program create() {
+            return Manager.get(vertexShaderCode, fragmentShaderCode, programVariables, uniVariables);
+        }
+    }
+
     public static class BatchTextProgram {
         private static final AttrVariable[] programVariables = {
                 AttrVariable.A_Position, AttrVariable.A_TexCoordinate, AttrVariable.A_MVPMatrixIndex,
@@ -88,9 +142,11 @@ public class Program {
                         "uniform vec4 u_Color;" +
                         "uniform float u_Alpha;" +
                         "void main() {" +
-                        "  gl_FragColor = u_Color * u_Alpha;" +
+                        /////"  gl_FragColor = u_Color * u_Alpha;" +
                         //"  gl_FragColor.a = u_Alpha;" +
-                        "}";
+                        "gl_FragColor = u_Color;"
+                        + "gl_FragColor.a = u_Alpha;"
+                        + "}";
 
         private GenericProgram() {}
 
@@ -144,7 +200,7 @@ public class Program {
     }
 
     public static class Manager {
-        private static Manager sInst = new Manager();
+        private final static Manager sInst = new Manager();
 
         /**
          * Gets a program instance based on the vertex and fragment shader codes. The variable
@@ -158,7 +214,7 @@ public class Program {
          */
         public static Program get(@NotNull String vertexShaderCode, @NotNull String fragmentShaderCode, @NotNull AttrVariable[] attrVariables,
                                   @NotNull UniformVariable[] uniformVariables) {
-            synchronized (sInst) {
+            synchronized (sInst.mProgs) {
                 for (int i = sInst.mProgs.size() - 1; i >= 0; --i) {
                     Pair<Program, Integer> p = sInst.mProgs.get(i);
 
@@ -181,24 +237,26 @@ public class Program {
         }
 
         private static void release(@NotNull Program program) {
-            synchronized (sInst) {
+            synchronized (sInst.mProgs) {
                 for (int i = sInst.mProgs.size() - 1; i >= 0; --i) {
                     Pair<Program, Integer> p = sInst.mProgs.get(i);
 
                     if (p.left.equals(program)) {
                         --p.right;
 
-                        if (p.right == 0) {
+                        if (p.right <= 0) {
                             program.delete();
 
                             sInst.mProgs.remove(i);
+                            break;
                         }
                     }
                 }
             }
         }
 
-        private List<Pair<Program, Integer>> mProgs = new ArrayList<Pair<Program, Integer>>();
+        @SuppressWarnings("SpellCheckingInspection")
+        private final List<Pair<Program, Integer>> mProgs = new ArrayList<Pair<Program, Integer>>();
 
         private Manager() {}
     }
@@ -217,7 +275,7 @@ public class Program {
 
     private Program() { }
 
-    public final void release() {
+    public final void dispose() {
         Manager.release(this);
     }
 

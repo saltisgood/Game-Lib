@@ -1,22 +1,38 @@
-package com.nickstephen.gamelib.opengl;
+package com.nickstephen.gamelib.opengl.shapes;
 
 import android.content.Context;
 import android.opengl.GLES20;
 
+import com.nickstephen.gamelib.opengl.Shape;
+import com.nickstephen.gamelib.opengl.TextureRegion;
+import com.nickstephen.gamelib.opengl.Vertices;
 import com.nickstephen.gamelib.opengl.bounds.Quadrilateral;
 import com.nickstephen.gamelib.opengl.layout.Container;
 import com.nickstephen.gamelib.opengl.program.Program;
+import com.nickstephen.gamelib.opengl.textures.Texture;
 
 import org.jetbrains.annotations.NotNull;
 
 /**
  * Created by Nick Stephen on 12/03/14.
  */
-public class Sprite extends TexturedShape {
+public class Sprite extends Shape {
     protected static final int NUM_SIDES = 4; 
     
     public Sprite(@NotNull Context context, @NotNull Container parent, @NotNull String textureFile, float width, float height) {
         this(context, parent, textureFile, width, height, 1, 1);
+    }
+
+    public Sprite(@NotNull Context context, @NotNull Container parent, @NotNull String textureFile, @NotNull Program program, float width, float height) {
+        super(context, parent, program);
+
+        mVertices = new Vertices(this, 4, 6, GLES20.GL_TRIANGLES);
+        mBoundsChecker = new Quadrilateral(this).setWidth(width).setHeight(height);
+
+        mTexture = Texture.Manager.get(textureFile, this, context).setTextureDimensions(1, 1);
+
+        setIndices();
+        setVertices();
     }
 
     protected Sprite(@NotNull Context context, @NotNull Container parent, @NotNull String textureFile,
@@ -26,8 +42,7 @@ public class Sprite extends TexturedShape {
         mVertices = new Vertices(this, 4, 6, GLES20.GL_TRIANGLES);
         mBoundsChecker = new Quadrilateral(this).setWidth(width).setHeight(height);
 
-        setTextureName(textureFile);
-        setTextureDimensions(spritesX, spritesY);
+        mTexture = Texture.Manager.get(textureFile, this, context).setTextureDimensions(spritesX, spritesY);
 
         setIndices();
         setVertices();
@@ -63,7 +78,7 @@ public class Sprite extends TexturedShape {
     }
 
     @Override
-    protected void setTextureCoords(TextureRegion region) {
+    public void setTextureCoords(TextureRegion region) {
         float[] coords = mVertices.getTextureCoords();
 
         coords[0] = region.u1;        // Add U for Vertex 0
@@ -76,5 +91,11 @@ public class Sprite extends TexturedShape {
         coords[7] = region.v2;          // Add V for Vertex 3
 
         mVertices.resetFloatBuffer();
+    }
+
+    TextureRegion getCurrentTextureRegion() {
+        float[] coords = mVertices.getTextureCoords();
+
+        return new TextureRegion(coords[0], coords[2], coords[1], coords[5]);
     }
 }

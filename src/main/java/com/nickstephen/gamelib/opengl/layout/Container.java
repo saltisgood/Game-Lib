@@ -3,12 +3,9 @@ package com.nickstephen.gamelib.opengl.layout;
 import android.content.Context;
 import android.opengl.GLES20;
 import android.opengl.Matrix;
-import android.view.MotionEvent;
 import android.view.ViewConfiguration;
 
 import com.nickstephen.gamelib.anim.FlingAnimation;
-import com.nickstephen.gamelib.anim.TranslationAnimation;
-import com.nickstephen.gamelib.opengl.Quadrilateral;
 import com.nickstephen.gamelib.opengl.Shape;
 import com.nickstephen.gamelib.opengl.Vertices;
 import com.nickstephen.gamelib.opengl.gestures.GestureEvent;
@@ -16,7 +13,6 @@ import com.nickstephen.gamelib.opengl.gestures.GestureFling;
 import com.nickstephen.gamelib.opengl.gestures.GestureScroll;
 import com.nickstephen.gamelib.opengl.interfaces.IContainerDraw;
 import com.nickstephen.gamelib.run.GameLoop;
-import com.nickstephen.lib.Twig;
 import com.nickstephen.lib.VersionControl;
 
 import org.jetbrains.annotations.NotNull;
@@ -469,15 +465,15 @@ public class Container extends Shape implements IContainerDraw {
     }
 
     @Override
-    public void destroy() {
-        super.destroy();
+    public void dispose() {
+        super.dispose();
 
         for (Shape c : mChildren) {
-            c.destroy();
+            c.dispose();
         }
 
         for (Container c : mChildContainers) {
-            c.destroy();
+            c.dispose();
         }
     }
 }

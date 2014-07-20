@@ -3,9 +3,8 @@ package com.nickstephen.gamelib.opengl.text;
 import android.content.Context;
 import android.opengl.Matrix;
 
+import com.nickstephen.gamelib.opengl.Shape;
 import com.nickstephen.gamelib.opengl.SpriteHelper;
-import com.nickstephen.gamelib.opengl.TextureRegion;
-import com.nickstephen.gamelib.opengl.TexturedShape;
 import com.nickstephen.gamelib.opengl.layout.Container;
 import com.nickstephen.gamelib.opengl.program.Program;
 
@@ -19,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
  * Doesn't currently support text with over 24 characters. //TODO: Increase this limit
  * @author Nick Stephen
  */
-public class Text extends TexturedShape {
+public class Text extends Shape {
     private static final float[] defColour = { 1.0f, 1.0f, 1.0f, 1.0f };
 
     /**
@@ -67,7 +66,6 @@ public class Text extends TexturedShape {
 
         TextUtil.init(context.getAssets(), fontFile);
         TextUtil.getInstance().load(this);
-        mTextureId = TextUtil.getInstance().getTextureId();
 
         mVertices = new SpriteHelper(this);
 
@@ -199,10 +197,5 @@ public class Text extends TexturedShape {
         mScaleX = x;
 
         reloadVertices();
-    }
-
-    @Override
-    protected void setTextureCoords(TextureRegion region) {
-
     }
 }

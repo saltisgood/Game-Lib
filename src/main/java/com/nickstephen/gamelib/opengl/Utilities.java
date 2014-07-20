@@ -16,9 +16,15 @@ import java.nio.FloatBuffer;
  * @author Nick Stephen
  */
 public class Utilities {
+    public static final int QUAD_CHANNEL = 4;
+
     public static final int BYTES_PER_FLOAT = 4;
     public static final int BYTES_PER_SHORT = 2;
     private static final String TAG = "Utilities";
+
+    public static final float[] red = new float[] { 1.0f, 0.f, 0.f, 0.f };
+    public static final float[] green = new float[] { 0.f, 1.f, 0.f, 0.f };
+    public static final float[] blue = new float[] { 0.f, 0.f, 1.f, 0.f };
 
     /**
      * Utility method for debugging OpenGL calls. Provide the name of the call

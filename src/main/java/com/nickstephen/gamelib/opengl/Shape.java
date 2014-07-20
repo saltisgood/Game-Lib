@@ -13,10 +13,12 @@ import com.nickstephen.gamelib.opengl.gestures.GestureFling;
 import com.nickstephen.gamelib.opengl.gestures.GestureScroll;
 import com.nickstephen.gamelib.opengl.gestures.IGestures;
 import com.nickstephen.gamelib.opengl.gestures.IOnGestureL;
+import com.nickstephen.gamelib.opengl.interfaces.IDisposable;
 import com.nickstephen.gamelib.opengl.interfaces.IDraw;
 import com.nickstephen.gamelib.opengl.layout.Container;
 import com.nickstephen.gamelib.opengl.program.Program;
 import com.nickstephen.gamelib.opengl.gestures.IOnClickL;
+import com.nickstephen.gamelib.opengl.textures.Texture;
 import com.nickstephen.gamelib.run.GameLoop;
 
 import org.jetbrains.annotations.NotNull;
@@ -32,7 +34,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * @author Nick Stephen
  */
-public abstract class Shape implements IGestures, IDraw {
+public abstract class Shape implements IGestures, IDraw, IDisposable {
     protected final Program mProgram;
     /**
      * A 4x4 float matrix pre-allocated here and whose contents can not be trusted in between
@@ -64,6 +66,8 @@ public abstract class Shape implements IGestures, IDraw {
     private Container mParent;
     private GLSurfaceView mSurface;
     protected final Context mContext;
+
+    protected Texture.Client mTexture;
 
     /**
      * Construct the shape with a {@link com.nickstephen.gamelib.opengl.program.Program.GenericProgram} used
@@ -104,12 +108,19 @@ public abstract class Shape implements IGestures, IDraw {
         mBoundsChecker = new Default(this);
     }
 
+
+    //TODO: Move to shapes package so can package protect Bounds!
+    public Bounds getBounds() {
+        return mBoundsChecker;
+    }
+
     public float getAlpha() {
         return mAlpha;
     }
 
     public void setAlpha(float alpha) {
         mAlpha = alpha;
+        mColour[3] = alpha;
     }
 
     /**
@@ -128,6 +139,10 @@ public abstract class Shape implements IGestures, IDraw {
         mAngle = angle;
 
         mModelMatrixInvalidated = true;
+    }
+
+    public @Nullable float[] getChannel() {
+        return null;
     }
 
     /**
@@ -174,11 +189,15 @@ public abstract class Shape implements IGestures, IDraw {
     }
 
     /**
-     * Implement this to release any OpenGL resources that have been created in using this object.
-     * <strong>Don't release shared resources or you'll get crashes!</strong>
+     * Implement this to dispose any OpenGL resources that have been created in using this object.
+     * <strong>Don't dispose shared resources or you'll get crashes!</strong>
      */
-    public void destroy() {
-        mProgram.release();
+    public void dispose() {
+        mProgram.dispose();
+
+        if (mTexture != null) {
+            mTexture.dispose();
+        }
     }
 
     /**
@@ -401,6 +420,18 @@ public abstract class Shape implements IGestures, IDraw {
 
     public void setOnScrollListener(@Nullable IOnGestureL listener) {
         mOnScrollListener = listener;
+    }
+
+    public int getTextureId() {
+        if (mTexture != null) {
+            return mTexture.getId();
+        }
+
+        return Texture.TEX_ID_UNASSIGNED;
+    }
+
+    public void setTextureCoords(TextureRegion region) {
+
     }
 
     /**

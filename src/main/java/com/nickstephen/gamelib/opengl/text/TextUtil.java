@@ -64,7 +64,7 @@ class TextUtil {
      * and whatnot!
      */
     static void destroyInstance() {
-        sInstance.mProgram.release();
+        sInstance.mProgram.dispose();
         sInstance = null;
     }
 

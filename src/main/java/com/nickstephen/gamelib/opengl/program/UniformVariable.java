@@ -9,7 +9,8 @@ public enum UniformVariable {
     U_Colour(4, "u_Color"),
     U_Texture(5, "u_Texture"),
     U_MVPMatrix(6, "u_MVPMatrix"),
-    U_Alpha(7, "u_Alpha");
+    U_Alpha(7, "u_Alpha"),
+    U_ChannelBalance(8, "u_Channel");
 
     private int mHandle;
     private String mName;

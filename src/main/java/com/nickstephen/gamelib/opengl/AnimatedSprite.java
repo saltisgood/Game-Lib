@@ -1,10 +1,10 @@
 package com.nickstephen.gamelib.opengl;
 
 import android.content.Context;
-import android.graphics.Bitmap;
 
 import com.nickstephen.gamelib.anim.SpriteAnimation;
 import com.nickstephen.gamelib.opengl.layout.Container;
+import com.nickstephen.gamelib.opengl.shapes.Sprite;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -30,7 +30,7 @@ public class AnimatedSprite extends Sprite {
 
         if (nextFrame != mCurrentFrame) {
             mCurrentFrame = nextFrame;
-            setTextureCoords(mTextureRegions[mCurrentFrame]);
+            setTextureCoords(mTexture.getTexRegions()[mCurrentFrame]);
         }
     }
 
@@ -38,15 +38,15 @@ public class AnimatedSprite extends Sprite {
         if (frame >= 0 && frame < mNumFrames && frame != mCurrentFrame) {
             mCurrentFrame = frame;
 
-            if (mTextureRegions != null) {
-                setTextureCoords(mTextureRegions[mCurrentFrame]);
+            if (mTexture.getTexRegions() != null) {
+                setTextureCoords(mTexture.getTexRegions()[mCurrentFrame]);
             }
         }
     }
 
     @Override
-    protected void setTextureCoords(TextureRegion region) {
-        super.setTextureCoords(mTextureRegions[mCurrentFrame]);
+    public void setTextureCoords(TextureRegion region) {
+        super.setTextureCoords(mTexture.getTexRegions()[mCurrentFrame]);
     }
 
     public int getNumFrames() {

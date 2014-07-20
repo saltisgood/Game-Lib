@@ -35,7 +35,7 @@ public class Polygon extends Shape {
     // number of coordinates per vertex in this array
     private static final int COORDS_PER_VERTEX = 2;
 
-    private static final float color[] = { 0.63671875f, 0.76953125f, 0.22265625f, 0.0f };
+    private static final float color[] = { 0.63671875f, 0.76953125f, 0.22265625f, 1.0f };
     private final int mSideCount;
 
     public Polygon(@NotNull Context context, @Nullable Container parent, float posX, float posY, float radius, int numberOfSides) {

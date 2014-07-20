@@ -109,7 +109,7 @@ public abstract class Game {
                 mSurface.queueEvent(new Runnable() {
                     @Override
                     public void run() {
-                        shape.destroy();
+                        shape.dispose();
                     }
                 });
                 mActiveView = null;
