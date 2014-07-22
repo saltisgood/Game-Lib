@@ -1,10 +1,12 @@
-package com.nickstephen.gamelib.opengl;
+package com.nickstephen.gamelib.opengl.textures;
 
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.opengl.GLES20;
 import android.opengl.GLUtils;
+
+import com.nickstephen.gamelib.opengl.Utilities;
 
 /**
  * A helper class for loading textures.

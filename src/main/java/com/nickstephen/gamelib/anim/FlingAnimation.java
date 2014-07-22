@@ -6,7 +6,7 @@ import android.os.Build;
 import android.widget.OverScroller;
 import android.widget.Scroller;
 
-import com.nickstephen.gamelib.opengl.Shape;
+import com.nickstephen.gamelib.opengl.shapes.Shape;
 
 import org.jetbrains.annotations.NotNull;
 

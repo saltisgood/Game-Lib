@@ -1,6 +1,6 @@
 package com.nickstephen.gamelib.anim;
 
-import com.nickstephen.gamelib.opengl.Shape;
+import com.nickstephen.gamelib.opengl.shapes.Shape;
 
 /**
  * Created by Nick Stephen on 13/03/14.

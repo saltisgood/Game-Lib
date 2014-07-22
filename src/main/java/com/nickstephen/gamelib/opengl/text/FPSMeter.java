@@ -7,11 +7,44 @@ import com.nickstephen.gamelib.opengl.layout.Container;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.reflect.Constructor;
+
 /**
  * A convenience text widget that displays a FPS count in the bottom left of its parent container.
  * @author Nick Stephen
  */
 public class FPSMeter extends Text {
+    public static @NotNull FPSMeter get(@NotNull Context context, @NotNull Container parent,
+                                        @NotNull Font font) {
+        return Text.FontManager.getTextGeneric(context, parent, font, getConstructor());
+    }
+
+    private static Constructor<FPSMeter> sConstructor;
+    private static Constructor<FPSMeter> getConstructor() {
+        if (sConstructor != null) {
+            return sConstructor;
+        }
+
+        Constructor<?>[] constrs = FPSMeter.class.getDeclaredConstructors();
+
+        if (constrs != null) {
+            for (int i = 0; i < constrs.length; ++i) {
+                Class<?>[] clazs = constrs[i].getParameterTypes();
+                if (clazs == null || clazs.length != 3) {
+                    continue;
+                }
+
+                if (clazs[0].getClass() == Context.class.getClass() && clazs[1].getClass() == Container.class.getClass()
+                        && clazs[2].getClass() == Font.class.getClass()) {
+                    sConstructor = (Constructor<FPSMeter>) constrs[i];
+                    return sConstructor;
+                }
+            }
+        }
+
+        throw new RuntimeException("ldskfaj");
+    }
+
     /**
      * The number of frames to wait before updating the GUI (also takes the average FPS over a longer
      * time)
@@ -27,10 +60,11 @@ public class FPSMeter extends Text {
      * @param parent The parent container (must not be null)
      * @param fontFile The path to the font file to load the font to use
      */
-    public FPSMeter(@NotNull Context context, @NotNull Container parent, @NotNull String fontFile) {
+    public FPSMeter(@NotNull Context context, @NotNull Container parent, @NotNull Font fontFile) {
         super(context, parent, fontFile);
 
         mCentered = false;
+        setColour(1.0f, 1.0f, 1.0f, 1.0f);
     }
 
     /**
@@ -43,7 +77,7 @@ public class FPSMeter extends Text {
     public void draw(@NotNull float[] vpMatrix) {
         if (mTickIndex == FRAMES_BEFORE_UPDATE) {
             long ave = GeneralUtil.arrayAverage(mTickTimes);
-            mText = Long.valueOf(1000 / ave).toString();
+            setText(Long.valueOf(1000 / ave).toString());
             mTickIndex = 0;
             //noinspection ConstantConditions
             moveTo(getParent().getScreenWidth() / -2.0f, getParent().getScreenHeight() / -2.0f);
@@ -54,8 +88,6 @@ public class FPSMeter extends Text {
             mTickTimes[mTickIndex++] = currentTime - mLastTick;
         }
         mLastTick = currentTime;
-
-
 
         super.draw(vpMatrix);
     }

@@ -1,6 +1,6 @@
 package com.nickstephen.gamelib.opengl.gestures;
 
-import com.nickstephen.gamelib.opengl.Shape;
+import com.nickstephen.gamelib.opengl.shapes.Shape;
 
 /**
  * Created by Nick Stephen on 24/04/2014.

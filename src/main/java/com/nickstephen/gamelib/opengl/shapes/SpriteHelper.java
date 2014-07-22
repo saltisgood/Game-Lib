@@ -1,17 +1,18 @@
-package com.nickstephen.gamelib.opengl;
+package com.nickstephen.gamelib.opengl.shapes;
 
 import android.opengl.GLES20;
 import android.opengl.Matrix;
 
+import com.nickstephen.gamelib.opengl.textures.TextureRegion;
 import com.nickstephen.lib.Twig;
 
 import org.jetbrains.annotations.NotNull;
 
 /**
- * <p>An extension to {@link com.nickstephen.gamelib.opengl.Vertices} that is used just for batch rendering
+ * <p>An extension to {@link Vertices} that is used just for batch rendering
  * sprites.</p>
  *
- * <p>If using this class instead of manually using {@link com.nickstephen.gamelib.opengl.Vertices},
+ * <p>If using this class instead of manually using {@link Vertices},
  * you should only use methods inside this class.</p>
  *
  * @author Nick Stephen

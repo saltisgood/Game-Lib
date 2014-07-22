@@ -1,201 +1,397 @@
 package com.nickstephen.gamelib.opengl.text;
 
 import android.content.Context;
-import android.opengl.Matrix;
 
-import com.nickstephen.gamelib.opengl.Shape;
-import com.nickstephen.gamelib.opengl.SpriteHelper;
+import com.nickstephen.gamelib.opengl.shapes.AnimatedSprite;
+import com.nickstephen.gamelib.opengl.shapes.SpriteHelper;
+import com.nickstephen.gamelib.opengl.Utilities;
 import com.nickstephen.gamelib.opengl.layout.Container;
-import com.nickstephen.gamelib.opengl.program.Program;
+import com.nickstephen.gamelib.opengl.shapes.SpriteBatch;
+import com.nickstephen.gamelib.opengl.textures.Texture;
+import com.nickstephen.gamelib.util.Pair;
+import com.nickstephen.lib.Twig;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- * <p>An extension to Shape meant for drawing text to screen (the equivalent of {@link android.widget.TextView}).
- * Note that the bulk of the code is in {@link com.nickstephen.gamelib.opengl.text.TextUtil}, this is
- * just the programmer visible API side of things.</p>
- *
- * Doesn't currently support text with over 24 characters. //TODO: Increase this limit
- * @author Nick Stephen
+ * Created by Nick Stephen on 17/07/2014.
  */
-public class Text extends Shape {
-    private static final float[] defColour = { 1.0f, 1.0f, 1.0f, 1.0f };
+public class Text extends SpriteBatch {
+    public static class Font {
+        public final String[] textureNames;
+        public final String fontName;
 
-    /**
-     * Destroys the singleton instance of {@link com.nickstephen.gamelib.opengl.text.TextUtil}. Should
-     * always be called on pausing the GLThread and never before!
-     */
-    public static void destroyInstance() {
-        TextUtil.destroyInstance();
+        public Font(String name, String[] texNames) {
+            fontName = name;
+            textureNames = texNames;
+        }
     }
 
-    protected String mText = "";
-    boolean mCentered = true;
-    private float[] mIdentityMatrix;
-    float mScaleX = 1.0f;
-    float mScaleY = 1.0f;
-    float mSpaceX;
+    public static class FontManager {
+        private final static FontManager sInst = new FontManager();
 
+        public static @Nullable Font getDefaultFont() {
+            return sInst.mDefault;
+        }
 
-    /**
-     * Default constructor.
-     * @param context A context
-     * @param parent The container for this shape
-     * @param fontFile The filename of the font file to be loaded (must be located in the /assets/
-     *                 folder)
-     * @param text The initial text to display to screen
-     */
-    public Text(@NotNull Context context, @NotNull Container parent, @NotNull String fontFile, @NotNull String text) {
-        this(context, parent, fontFile);
+        public static void setDefaultFont(@Nullable Font font) {
+            sInst.mDefault = font;
+        }
 
-        setText(text);
+        public static @NotNull Text getText(@NotNull Context context, @NotNull Container parent,
+                                            @NotNull Font font) {
+            synchronized (sInst.mFonts) {
+                for (int i = sInst.mFonts.size() - 1; i >= 0; --i) {
+                    Pair<Font, Integer> p = sInst.mFonts.get(i);
+
+                    if (p.left.fontName.compareTo(font.fontName) == 0) {
+                        ++p.right;
+
+                        return new Text(context, parent, p.left);
+                    }
+                }
+
+                sInst.mFonts.add(new Pair<Font, Integer>(font, 1));
+                return new Text(context, parent, font);
+            }
+        }
+
+        public static <T extends Text> T getTextGeneric(@NotNull Context context, @NotNull Container parent,
+                                         @NotNull Font font, Constructor<T> constr) {
+            try {
+                synchronized (sInst.mFonts) {
+                    for (int i = sInst.mFonts.size() - 1; i >= 0; --i) {
+                        Pair<Font, Integer> p = sInst.mFonts.get(i);
+
+                        if (p.left.fontName.compareTo(font.fontName) == 0) {
+                            ++p.right;
+
+                            return constr.newInstance(context, parent, p.left);
+                        }
+                    }
+
+                    sInst.mFonts.add(new Pair<Font, Integer>(font, 1));
+                    return constr.newInstance(context, parent, font);
+                }
+            } catch (InstantiationException e) {
+                Twig.error("Font Mannnn", e.getMessage());
+            } catch (IllegalAccessException e) {
+                Twig.error("Font Mannn", e.getMessage());
+            } catch (InvocationTargetException e) {
+                Twig.error("Font Mannn", e.getMessage());
+            }
+
+            return null;
+        }
+
+        private final List<Pair<Font, Integer>> mFonts = new ArrayList<Pair<Font, Integer>>();
+        private Font mDefault;
+
+        private FontManager() {}
     }
 
-    /**
-     * Constructor 1. Doesn't automatically set the text to display, which should be done before any
-     * rendering passes.
-     * @param context A context
-     * @param parent The container for this shape
-     * @param fontFile The filename of the font file to be loaded (must be located in the /assets/
-     *                 folder)
-     */
-    public Text(@NotNull Context context, @NotNull Container parent, @NotNull String fontFile) {
-        super(context, parent, Program.BatchTextProgram.create());
+    public static final float DEFAULT_FONT_SIZE = 40.f;
 
-        this.setColour(defColour);
+    protected final Font mFont;
+    private final Object mTextLock = new Object();
+    private String mText;
+    private boolean mTextInvalidated = false;
+    protected float[] mChannelArr;
+    protected float mCharSize = DEFAULT_FONT_SIZE;
+    protected boolean mCentered = true;
 
-        TextUtil.init(context.getAssets(), fontFile);
-        TextUtil.getInstance().load(this);
+    protected Text(@NotNull Context context, @NotNull Container parent, @NotNull Font font) {
+        super(context, parent);
 
-        mVertices = new SpriteHelper(this);
-
-        mIdentityMatrix = new float[16];
-        Matrix.setIdentityM(mIdentityMatrix, 0);
+        mFont = font;
     }
 
-    /**
-     * Get the text which will be displayed to screen
-     * @return The string version of the text
-     */
-    public @NotNull String getText() {
-        return mText;
+    public void setText(@Nullable String text) {
+        if (text != null && text.length() > SpriteHelper.MAX_SPRITES) {
+            throw new RuntimeException("Max text length currently 24 chars");
+        }
+
+        synchronized (mTextLock) {
+            mText = text;
+            mTextInvalidated = true;
+        }
     }
 
-    /**
-     * Sets the text to be displayed to screen. NOTE: Will only display the first 24 characters!
-     * @see com.nickstephen.gamelib.opengl.text.Text
-     * @param text The new text to display
-     */
-    public void setText(@NotNull String text) {
-        mText = text;
+    public void setFontSize(float s) {
+        if (s < 0.f) {
+            s = DEFAULT_FONT_SIZE;
+        }
 
-        reloadVertices();
+        mCharSize = s;
     }
 
-    /**
-     * Reload the vertex information with any changes that have previously been performed on this
-     * object.
-     */
-    private void reloadVertices() {
-        ((SpriteHelper) mVertices).reset();
-        TextUtil.getInstance().load(this).addTextToBatch((SpriteHelper) mVertices);
-        ((SpriteHelper) mVertices).finishAddingSprites();
+    public void setCentered(boolean centered) {
+        mCentered = centered;
     }
 
-    /**
-     * Move a relative distance inside the container. Just overriden here to make sure there's a call
-     * to {@link #reloadVertices()}.
-     * @param dx The distance between the old and new x offsets (pixels)
-     * @param dy The distance between the old and new y offsets (pixels)
-     */
+    protected String containingText(char c) {
+        //TODO: Implement for multiple texture fonts
+        return mFont.textureNames[0];
+    }
+
+    protected int containingFrame(char c) {
+        switch (c) {
+            case 'A':
+            case 'Q':
+            case 'g':
+                return 0;
+            case 'B':
+            case 'R':
+            case 'h':
+                return 1;
+            case 'C':
+            case 'S':
+            case 'i':
+                return 2;
+            case 'D':
+            case 'T':
+            case 'j':
+                return 3;
+            case 'E':
+            case 'U':
+            case 'k':
+                return 8;
+            case 'F':
+            case 'V':
+            case 'l':
+                return 9;
+            case 'G':
+            case 'W':
+            case 'm':
+                return 10;
+            case 'H':
+            case 'X':
+            case 'n':
+                return 11;
+            case 'I':
+            case 'Y':
+            case 'o':
+                return 16;
+            case 'J':
+            case 'Z':
+            case 'p':
+                return 17;
+            case 'K':
+            case 'a':
+            case 'q':
+                return 18;
+            case 'L':
+            case 'b':
+            case 'r':
+                return 19;
+            case 'M':
+            case 'c':
+            case 's':
+                return 24;
+            case 'N':
+            case 'd':
+            case 't':
+                return 25;
+            case 'O':
+            case 'e':
+            case 'u':
+                return 26;
+            case 'P':
+            case 'f':
+            case 'v':
+                return 27;
+            case 'w':
+            case '#':
+            case '=':
+                return 4;
+            case 'x':
+            case '$':
+            case ';':
+                return 5;
+            case 'y':
+            case '%':
+            case ':':
+                return 6;
+            case 'z':
+            case '^':
+            case '{':
+                 return 7;
+            case '0':
+            case '&':
+            case '}':
+                return 12;
+            case '1':
+            case '*':
+            case '[':
+                return 13;
+            case '2':
+            case '(':
+            case ']':
+                return 14;
+            case '3':
+            case ')':
+            case '\'':
+                return 15;
+            case '4':
+            case '-':
+            case '<':
+                return 20;
+            case '5':
+            case '_':
+            case '>':
+                return 21;
+            case '6':
+            case ',':
+                return 22;
+            case '7':
+            case '.':
+                return 23;
+            case '8':
+            case '\"':
+                return 28;
+            case '9':
+            case '?':
+                return 29;
+            case '!':
+            case '/':
+                return 30;
+            case '@':
+            case '+':
+                return 31;
+        }
+
+        throw new RuntimeException("unexpected char value: " + c);
+    }
+
+    protected float[] containingChannel(char c) {
+        if ((c >= 'A' && c <= 'P') || (c >= 'w' && c <= 'z') || (c >= '0' && c <= '9')) {
+            return Utilities.red;
+        } else if (c >= 'Q' && c <= 'f') {
+            return Utilities.green;
+        } else if (c >= 'g' && c <= 'v') {
+            return Utilities.blue;
+        }
+
+        switch (c) {
+            case '!':
+            case '@':
+                return Utilities.red;
+            case '#':
+            case '$':
+            case '%':
+            case '^':
+            case '&':
+            case '*':
+            case '(':
+            case ')':
+            case '-':
+            case '_':
+            case ',':
+            case '.':
+            case '\"':
+            case '?':
+            case '/':
+            case '+':
+                return Utilities.green;
+            case '=':
+            case ';':
+            case ':':
+            case '{':
+            case '}':
+            case '[':
+            case ']':
+            case '\'':
+            case '<':
+            case '>':
+                return Utilities.blue;
+        }
+
+        throw new RuntimeException("unexpected char value: " + c);
+    }
+
+    protected float getCharacterKerning(char c) {
+        float adj = 0.4f;
+
+        switch (c) {
+            case 'l':
+                adj = 0.5f;
+                break;
+            case '!':
+                adj = 0.6f;
+                break;
+        }
+
+        return mCharSize * adj;
+    }
+
+    protected float getCharacterBaseline(char c) {
+        return 0.f;
+    }
+
     @Override
-    public void move(float dx, float dy) {
-        super.move(dx, dy);
+    public void draw(@NotNull float[] vpMatrix) {
+        if (mTexture == null) {
+            mTexture = Texture.Manager.get(containingText('a'), this, mContext);
+        }
 
-        reloadVertices();
+        if (mText == null) {
+            return;
+        }
+
+        synchronized (mTextLock) {
+            if (mTextInvalidated) {
+                clear(true);
+
+                if (mTexture.getId() == Texture.TEX_ID_UNASSIGNED) {
+                    return;
+                }
+
+                final int len = mText.length();
+                float adjust = (len % 2 == 0) ? mCharSize / 2.f : 0.f;
+                mChannelArr = new float[Utilities.QUAD_CHANNEL * len];
+
+                for (int i = 0; i < len; ++i) {
+                    char c = mText.charAt(i);
+
+                    String texture = containingText(c);
+                    AnimatedSprite s = new AnimatedSprite(mContext, getParent(), texture, mCharSize, mCharSize,
+                                8, 4);
+
+                    s.getTextureId(); // refreshes the texture stuff
+                    s.gotoFrame(containingFrame(c));
+
+                    if (i != 0) {
+                        adjust -= getCharacterKerning(c);
+                    }
+
+                    if (mCentered) {
+                        s.move(((i - (len / 2.f)) * mCharSize) + adjust, 0.f);
+                    } else {
+                        s.move((i * mCharSize) + adjust, (mCharSize / 2.f));
+                    }
+
+                    addSpriteToBatch(s);
+
+                    System.arraycopy(containingChannel(c), 0, mChannelArr, Utilities.QUAD_CHANNEL * i, Utilities.QUAD_CHANNEL);
+                }
+
+                refresh();
+                mTextInvalidated = false;
+            }
+
+            super.draw(vpMatrix);
+        }
     }
 
-    /**
-     * Move to a new container offset. Just override here to make sure there's a call to
-     * {@link #reloadVertices()}.
-     * @param newX The new x offset (pixels)
-     * @param newY The new y offset (pixels)
-     */
+    @Nullable
     @Override
-    public void moveTo(float newX, float newY) {
-        super.moveTo(newX, newY);
-
-        reloadVertices();
-    }
-
-    /**
-     * Since the model matrices are already taken care of in
-     * {@link com.nickstephen.gamelib.opengl.SpriteHelper}, simply return the identity matrix so that
-     * the multiplication in {@link #draw(float[])} is ignored.
-     * @return The identity matrix
-     */
-    @NotNull
-    @Override
-    public float[] getModelMatrix() {
-        Matrix.setIdentityM(mIdentityMatrix, 0);
-        return mIdentityMatrix;
-    }
-
-    /**
-     * Sets whether the text should be centered around its given position
-     * @param val True to centre, false otherwise
-     */
-    public void setCentered(boolean val) {
-        mCentered = val;
-
-        reloadVertices();
-    }
-
-    /**
-     * Set both of the multipliers for the text's display scale. Should normally be 0 < x < 1 so as
-     * not to decrease the quality of the text texture. If you need a bigger texture then increase
-     * the value of {@link com.nickstephen.gamelib.opengl.text.TextUtil#FONT_SIZE}.
-     * @param x The new scale for the x-axis
-     * @param y The new scale for the y-axis
-     */
-    public void setScale(float x, float y) {
-        mScaleX = x;
-        mScaleY = y;
-        reloadVertices();
-    }
-
-    /**
-     * Sets the scale to multiply the text's size by in the x-axis. De-coupling this from the y scale
-     * will result in warped text.
-     * @see #setScale(float, float)
-     * @param x The new scale for the x-axis
-     */
-    public void setScaleX(float x) {
-        mScaleX = x;
-
-        reloadVertices();
-    }
-
-    /**
-     * Sets the scale to multiply the text's size by in the y-axis. De-coupling this from the x scale
-     * will result in warped text.
-     * @see #setScale(float, float)
-     * @param y The new scale for the y-axis
-     */
-    public void setScaleY(float y) {
-        mScaleY = y;
-
-        reloadVertices();
-    }
-
-    /**
-     * Set the space to put between characters when they're displayed on screen, i.e. controls
-     * keming.
-     * @param x Distance in pixels
-     */
-    public void setSpaceX(float x) {
-        mScaleX = x;
-
-        reloadVertices();
+    public float[] getChannel() {
+        return mChannelArr;
     }
 }

@@ -1,6 +1,6 @@
 package com.nickstephen.gamelib.opengl.bounds;
 
-import com.nickstephen.gamelib.opengl.Shape;
+import com.nickstephen.gamelib.opengl.shapes.Shape;
 
 import org.jetbrains.annotations.NotNull;
 

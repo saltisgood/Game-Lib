@@ -1,6 +1,6 @@
 package com.nickstephen.gamelib.anim;
 
-import com.nickstephen.gamelib.opengl.AnimatedSprite;
+import com.nickstephen.gamelib.opengl.shapes.AnimatedSprite;
 
 import org.jetbrains.annotations.NotNull;
 

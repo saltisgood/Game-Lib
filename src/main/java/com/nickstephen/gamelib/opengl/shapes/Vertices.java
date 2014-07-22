@@ -1,13 +1,15 @@
-package com.nickstephen.gamelib.opengl;
+package com.nickstephen.gamelib.opengl.shapes;
 
 import android.opengl.GLES20;
 
+import com.nickstephen.gamelib.opengl.Utilities;
 import com.nickstephen.gamelib.opengl.program.AttrVariable;
 import com.nickstephen.gamelib.opengl.program.Program;
 import com.nickstephen.gamelib.opengl.program.UniformVariable;
+import com.nickstephen.gamelib.opengl.shapes.Shape;
+import com.nickstephen.gamelib.opengl.textures.Texture;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -25,6 +27,7 @@ public class Vertices {
 
     private final static int INDEX_SIZE = Short.SIZE / 8;      // Index Byte Size (Short.SIZE = bits)
 
+    private final static int HANDLE_UNSET = -1;
 
     protected final int mNumVertices;
     /**
@@ -59,6 +62,12 @@ public class Vertices {
     protected float[] mTexCoords;
     protected float[] mVertexCoords;
     protected float[] mScratch;
+
+    private int mMVPMatrixHandle = HANDLE_UNSET;
+    private int mColourHandle = HANDLE_UNSET;
+    private int mTextureUniformHandle = HANDLE_UNSET;
+    private int mAlphaHandle = HANDLE_UNSET;
+    private int mChannelHandle = HANDLE_UNSET;
 
     /**
      * Constructor.
@@ -123,11 +132,13 @@ public class Vertices {
      * Perform the setups prior to drawing.
      * @param mvpMatrix The full MVP matrix to use
      */
-    private synchronized void bind(@NotNull float[] mvpMatrix) {
+    private synchronized boolean bind(@NotNull float[] mvpMatrix) {
         GLES20.glUseProgram(mProgram.getHandle());
 
-        int mvpMatricesHandle = GLES20.glGetUniformLocation(mProgram.getHandle(), UniformVariable.U_MVPMatrix.getName());
-        GLES20.glUniformMatrix4fv(mvpMatricesHandle, mNumMVPMatrices, false, mvpMatrix, 0);
+        if (mMVPMatrixHandle == HANDLE_UNSET) {
+            mMVPMatrixHandle = GLES20.glGetUniformLocation(mProgram.getHandle(), UniformVariable.U_MVPMatrix.getName());
+        }
+        GLES20.glUniformMatrix4fv(mMVPMatrixHandle, mNumMVPMatrices, false, mvpMatrix, 0);
 
         // bind vertex position pointer
         mVertices.position(0);                         // Set Vertex Buffer to Position
@@ -136,15 +147,25 @@ public class Vertices {
         GLES20.glEnableVertexAttribArray(mPositionHandle);
 
         if (mUsesColour) {
-            int colourHandle = GLES20.glGetUniformLocation(mProgram.getHandle(), UniformVariable.U_Colour.getName());
-            GLES20.glUniform4fv(colourHandle, 1, mShape.getColour(), 0);
+            if (mColourHandle == HANDLE_UNSET) {
+                mColourHandle = GLES20.glGetUniformLocation(mProgram.getHandle(), UniformVariable.U_Colour.getName());
+            }
+            GLES20.glUniform4fv(mColourHandle, 1, mShape.getColour(), 0);
         }
 
         if (mUsesTexture) {
-            int textureUniformHandle = GLES20.glGetUniformLocation(mProgram.getHandle(), UniformVariable.U_Texture.getName());
+            if (mTextureUniformHandle == HANDLE_UNSET) {
+                mTextureUniformHandle = GLES20.glGetUniformLocation(mProgram.getHandle(), UniformVariable.U_Texture.getName());
+            }
             GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
-            GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, mShape.getTextureId());
-            GLES20.glUniform1i(textureUniformHandle, 0);
+
+            int texId = mShape.getTextureId();
+            if (texId != Texture.TEX_ID_UNASSIGNED) {
+                GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, texId);
+                GLES20.glUniform1i(mTextureUniformHandle, 0);
+            } else {
+                return false;
+            }
         }
 
         if (mUsesTextureCoords) {
@@ -159,14 +180,15 @@ public class Vertices {
         }
 
         if (mUsesAlpha) {
-            int alphaHandle = GLES20.glGetUniformLocation(mProgram.getHandle(), UniformVariable.U_Alpha.getName());
-            GLES20.glUniform1f(alphaHandle, mShape.getAlpha());
+            if (mAlphaHandle == HANDLE_UNSET) {
+                mAlphaHandle = GLES20.glGetUniformLocation(mProgram.getHandle(), UniformVariable.U_Alpha.getName());
+            }
+            GLES20.glUniform1f(mAlphaHandle, mShape.getAlpha());
         }
 
         if (mUsesChannelBalance) {
             int channelHandle = GLES20.glGetUniformLocation(mProgram.getHandle(), UniformVariable.U_ChannelBalance.getName());
             GLES20.glUniform4fv(channelHandle, mNumMVPMatrices, mShape.getChannel(), 0);
-            //GLES20.glUniform4fv(channelHandle, 1, new float[] { 1.f, 0.f, 0.f, 0.f }, 0);
         }
 
         // bind MVP Matrix index position handle
@@ -175,6 +197,8 @@ public class Vertices {
                     GLES20.GL_FLOAT, false, mVertexSize, mVertices);
             GLES20.glEnableVertexAttribArray(mMVPIndexHandle);
         }
+
+        return true;
     }
 
     /**
@@ -182,7 +206,10 @@ public class Vertices {
      * @param mvpMatrix The full MVP matrix to use
      */
     public void draw(@NotNull float[] mvpMatrix) {
-        bind(mvpMatrix);
+        if (!bind(mvpMatrix)) {
+            unbind();
+            return;
+        }
 
         if (mIndices != null)  {                       // IF Indices Exist
             synchronized (mIndices) {

@@ -1,6 +1,6 @@
 package com.nickstephen.gamelib.opengl.gestures;
 
-import com.nickstephen.gamelib.opengl.Shape;
+import com.nickstephen.gamelib.opengl.shapes.Shape;
 
 /**
  * On Click Listener interface. All click and long click listeners should implement this interface.

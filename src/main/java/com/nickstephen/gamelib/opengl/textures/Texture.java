@@ -5,12 +5,13 @@ import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.opengl.GLES20;
+import android.os.AsyncTask;
 
-import com.nickstephen.gamelib.opengl.Shape;
-import com.nickstephen.gamelib.opengl.TextureHelper;
-import com.nickstephen.gamelib.opengl.TextureRegion;
+import com.nickstephen.gamelib.opengl.shapes.Shape;
 import com.nickstephen.gamelib.opengl.interfaces.IDisposable;
+import com.nickstephen.gamelib.run.GameLoop;
 import com.nickstephen.gamelib.util.Pair;
+import com.nickstephen.lib.Twig;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -18,6 +19,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 /**
  * Created by Nick Stephen on 16/07/2014.
@@ -70,6 +72,41 @@ public class Texture {
 
     }
 
+    protected class Loader extends AsyncTask<Void, Void, Bitmap> {
+        protected final Context mContext;
+        protected final String mFilename;
+
+        public Loader(@NotNull Context loadContext, @NotNull String fileName) {
+            mContext = loadContext;
+            mFilename = fileName;
+        }
+
+        @Override
+        protected Bitmap doInBackground(Void... voids) {
+            AssetManager assets = mContext.getAssets();
+            InputStream is;
+            try {
+                is = assets.open(mFilename);
+            } catch (IOException e) {
+                Twig.printStackTrace(e);
+                return null;
+            }
+
+            Bitmap raw = BitmapFactory.decodeStream(is);
+
+            try {
+                is.close();
+            } catch (IOException e) {
+                Twig.printStackTrace(e);
+                return null;
+            }
+
+            return raw;
+        }
+
+
+    }
+
     protected static @NotNull TextureRegion[] setupTextureRegion(float rawW, float rawH, int spritesX, int spritesY) {
         TextureRegion[] regions = new TextureRegion[spritesX * spritesY];
 
@@ -113,13 +150,21 @@ public class Texture {
         public int getId() {
             if (mTexId == TEX_ID_UNASSIGNED) {
                 mTexId = Texture.this.getId(mTexLoadContext);
+
+                if (mTexId == TEX_ID_UNASSIGNED) {
+                    return TEX_ID_UNASSIGNED;
+                }
             }
 
             if (mRegions == null) {
                 mRegions = setupTextureRegion(Texture.this.mRawWidth, Texture.this.mRawHeight,
                         mSpritesX, mSpritesY);
 
-                mParent.setTextureCoords(mRegions[0]);
+                if (mRegions.length > 0) {
+                    mParent.setTextureCoords(mRegions[0]);
+                } else {
+                    Twig.warning("Texture", "Zero-length texture region array");
+                }
             }
 
             return mTexId;
@@ -134,6 +179,7 @@ public class Texture {
     protected int mId;
     protected float mRawWidth;
     protected float mRawHeight;
+    protected Loader mTexLoader;
 
     private Texture() {}
 
@@ -145,31 +191,47 @@ public class Texture {
         }
     }
 
-    protected int getId(@NotNull Context context) {
+    protected int getId(final @NotNull Context context) {
         if (mId == TEX_ID_UNASSIGNED) {
-            AssetManager assets = context.getAssets();
-            InputStream is;
-            try {
-                is = assets.open(mName);
-            } catch (IOException e) {
-                return 0;
+            if (mTexLoader == null) {
+                GameLoop.getInstanceUnsafe().getMainThreadHandler().post(new Runnable() {
+                    @Override
+                    public void run() {
+                        synchronized (Texture.this) {
+                            if (mTexLoader == null) {
+                                mTexLoader = new Loader(context, mName);
+                                mTexLoader.execute();
+                            }
+                        }
+                    }
+                });
+
+                return TEX_ID_UNASSIGNED;
+            } else {
+                if (mTexLoader.getStatus() == AsyncTask.Status.FINISHED) {
+                    Bitmap result = null;
+                    try {
+                        result = mTexLoader.get();
+                    } catch (InterruptedException e) {
+                        Twig.printStackTrace(e);
+                    } catch(ExecutionException e) {
+                        Twig.printStackTrace(e);
+                    }
+
+                    if (result != null) {
+                        mId = TextureHelper.loadTexture(result);
+                        mRawWidth = result.getWidth();
+                        mRawHeight = result.getHeight();
+                    } else {
+                        Twig.debug("Texture", "Error loading texture!");
+                        throw new RuntimeException("Error loading texture!");
+                    }
+
+                    mTexLoader = null;
+                } else {
+                    return TEX_ID_UNASSIGNED;
+                }
             }
-
-            Bitmap raw = BitmapFactory.decodeStream(is);
-
-            try {
-                is.close();
-            } catch (IOException e) {
-                return 0;
-            }
-
-            mId = TextureHelper.loadTexture(raw);
-
-            mRawWidth = raw.getWidth();
-            mRawHeight = raw.getHeight();
-
-            //mTextureRegions = setupTextureRegion(raw, mSpritesX, mSpritesY);
-            //setTextureCoords(mTextureRegions[0]);
         }
 
         return mId;

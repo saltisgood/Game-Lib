@@ -6,8 +6,8 @@ import android.opengl.Matrix;
 import android.view.ViewConfiguration;
 
 import com.nickstephen.gamelib.anim.FlingAnimation;
-import com.nickstephen.gamelib.opengl.Shape;
-import com.nickstephen.gamelib.opengl.Vertices;
+import com.nickstephen.gamelib.opengl.shapes.Shape;
+import com.nickstephen.gamelib.opengl.shapes.Vertices;
 import com.nickstephen.gamelib.opengl.gestures.GestureEvent;
 import com.nickstephen.gamelib.opengl.gestures.GestureFling;
 import com.nickstephen.gamelib.opengl.gestures.GestureScroll;
@@ -151,7 +151,7 @@ public class Container extends Shape implements IContainerDraw {
 
     /**
      * The primary drawing method for containers. Note that this does not actually draw the bounding
-     * box as seen on a debug build. That is left to {@link com.nickstephen.gamelib.opengl.Shape#draw(float[])}.
+     * box as seen on a debug build. That is left to {@link com.nickstephen.gamelib.opengl.shapes.Shape#draw(float[])}.
      * <p/>
      * This method will first draw itself (if {@link com.nickstephen.lib.VersionControl#IS_RELEASE}
      * is false), then translates the viewMatrix argument by the parent offsets of this container as

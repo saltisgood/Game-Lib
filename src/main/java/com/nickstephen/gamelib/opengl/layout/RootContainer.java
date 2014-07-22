@@ -2,10 +2,12 @@ package com.nickstephen.gamelib.opengl.layout;
 
 import android.content.Context;
 import android.opengl.GLSurfaceView;
+import android.provider.SyncStateContract;
 import android.view.MotionEvent;
 
 import com.nickstephen.gamelib.opengl.gestures.GestureEvent;
 import com.nickstephen.gamelib.opengl.text.FPSMeter;
+import com.nickstephen.gamelib.opengl.text.Text;
 import com.nickstephen.lib.VersionControl;
 
 import org.jetbrains.annotations.NotNull;
@@ -31,8 +33,11 @@ public class RootContainer extends Container {
         this(context, surface, width, height);
 
         if (!VersionControl.IS_RELEASE) {
-            FPSMeter fps = new FPSMeter(context, this, fontFile);
-            this.mChildren.add(fps);
+            Text.Font f = Text.FontManager.getDefaultFont();
+            if (f != null) {
+                FPSMeter fps = new FPSMeter(context, this, f);
+                this.mChildren.add(fps);
+            }
         }
     }
 

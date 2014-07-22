@@ -1,4 +1,4 @@
-package com.nickstephen.gamelib.opengl;
+package com.nickstephen.gamelib.opengl.textures;
 
 /**
  * Simple abstraction of the U,V coordinates of textures used with a vertex.

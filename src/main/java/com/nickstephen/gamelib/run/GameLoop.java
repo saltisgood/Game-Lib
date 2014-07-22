@@ -3,7 +3,7 @@ package com.nickstephen.gamelib.run;
 import android.os.Handler;
 
 import com.nickstephen.gamelib.anim.Animation;
-import com.nickstephen.gamelib.opengl.Shape;
+import com.nickstephen.gamelib.opengl.shapes.Shape;
 import com.nickstephen.gamelib.opengl.gestures.GestureEvent;
 import com.nickstephen.gamelib.opengl.layout.RootContainer;
 import com.nickstephen.gamelib.run.tasking.ITask;

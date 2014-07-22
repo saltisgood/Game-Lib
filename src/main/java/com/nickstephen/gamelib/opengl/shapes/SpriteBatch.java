@@ -2,15 +2,12 @@ package com.nickstephen.gamelib.opengl.shapes;
 
 import android.content.Context;
 
-import com.nickstephen.gamelib.opengl.Shape;
-import com.nickstephen.gamelib.opengl.SpriteHelper;
 import com.nickstephen.gamelib.opengl.bounds.Multiple;
 import com.nickstephen.gamelib.opengl.bounds.Quadrilateral;
 import com.nickstephen.gamelib.opengl.layout.Container;
 import com.nickstephen.gamelib.opengl.program.Program;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,7 +27,7 @@ public class SpriteBatch extends Shape {
     }
 
     public void addSpriteToBatch(@NotNull Sprite sprite) {
-        Quadrilateral quadBounds = (Quadrilateral) sprite.getBounds();
+        Quadrilateral quadBounds = (Quadrilateral) sprite.mBoundsChecker;
 
         ((Multiple<Quadrilateral>) mBoundsChecker).addBound(quadBounds);
 
@@ -48,6 +45,7 @@ public class SpriteBatch extends Shape {
         }
 
         mSprites.clear();
+        ((SpriteHelper) mVertices).reset();
     }
 
     public void refresh() {

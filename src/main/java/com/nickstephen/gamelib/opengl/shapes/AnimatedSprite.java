@@ -1,10 +1,11 @@
-package com.nickstephen.gamelib.opengl;
+package com.nickstephen.gamelib.opengl.shapes;
 
 import android.content.Context;
 
 import com.nickstephen.gamelib.anim.SpriteAnimation;
 import com.nickstephen.gamelib.opengl.layout.Container;
 import com.nickstephen.gamelib.opengl.shapes.Sprite;
+import com.nickstephen.gamelib.opengl.textures.TextureRegion;
 
 import org.jetbrains.annotations.NotNull;
 

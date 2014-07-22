@@ -1,4 +1,4 @@
-package com.nickstephen.gamelib.opengl;
+package com.nickstephen.gamelib.opengl.shapes;
 
 import android.content.Context;
 import android.opengl.GLES20;

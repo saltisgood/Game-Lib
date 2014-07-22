@@ -3,9 +3,7 @@ package com.nickstephen.gamelib.opengl.shapes;
 import android.content.Context;
 import android.opengl.GLES20;
 
-import com.nickstephen.gamelib.opengl.Shape;
-import com.nickstephen.gamelib.opengl.TextureRegion;
-import com.nickstephen.gamelib.opengl.Vertices;
+import com.nickstephen.gamelib.opengl.textures.TextureRegion;
 import com.nickstephen.gamelib.opengl.bounds.Quadrilateral;
 import com.nickstephen.gamelib.opengl.layout.Container;
 import com.nickstephen.gamelib.opengl.program.Program;

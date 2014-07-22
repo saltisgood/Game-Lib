@@ -1,4 +1,4 @@
-package com.nickstephen.gamelib.opengl;
+package com.nickstephen.gamelib.opengl.shapes;
 
 import android.content.Context;
 import android.opengl.GLSurfaceView;
@@ -6,6 +6,7 @@ import android.opengl.Matrix;
 
 import com.nickstephen.gamelib.GeneralUtil;
 import com.nickstephen.gamelib.anim.FlingAnimation;
+import com.nickstephen.gamelib.opengl.textures.TextureRegion;
 import com.nickstephen.gamelib.opengl.bounds.Bounds;
 import com.nickstephen.gamelib.opengl.bounds.Default;
 import com.nickstephen.gamelib.opengl.gestures.GestureEvent;
@@ -106,12 +107,6 @@ public abstract class Shape implements IGestures, IDraw, IDisposable {
         }
 
         mBoundsChecker = new Default(this);
-    }
-
-
-    //TODO: Move to shapes package so can package protect Bounds!
-    public Bounds getBounds() {
-        return mBoundsChecker;
     }
 
     public float getAlpha() {

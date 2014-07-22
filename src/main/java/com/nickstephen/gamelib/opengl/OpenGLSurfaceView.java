@@ -7,7 +7,6 @@ import android.view.MotionEvent;
 
 import com.nickstephen.gamelib.opengl.gestures.GestureControl;
 import com.nickstephen.gamelib.opengl.gestures.GestureEvent;
-import com.nickstephen.gamelib.opengl.text.Text;
 import com.nickstephen.gamelib.run.Game;
 
 import org.jetbrains.annotations.NotNull;
@@ -80,7 +79,7 @@ public class OpenGLSurfaceView extends GLSurfaceView {
             }
         }
 
-        Text.destroyInstance();
+        //Text.destroyInstance();
 
         super.onPause();
     }
