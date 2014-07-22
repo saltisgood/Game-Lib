@@ -6,11 +6,11 @@ package com.nickstephen.gamelib.opengl.program;
  * @author Nick Stephen
  */
 public enum UniformVariable {
-    U_Colour(4, "u_Color"),
-    U_Texture(5, "u_Texture"),
-    U_MVPMatrix(6, "u_MVPMatrix"),
-    U_Alpha(7, "u_Alpha"),
-    U_ChannelBalance(8, "u_Channel");
+    U_Colour(4, Constants.UNI_PREF + Constants.COLOR),
+    U_Texture(5, Constants.UNI_PREF + Constants.TEXTURE),
+    U_MVPMatrix(6, Constants.UNI_PREF + Constants.MVP_MAT),
+    U_Alpha(7, Constants.UNI_PREF + Constants.ALPHA),
+    U_ChannelBalance(8, Constants.UNI_PREF + Constants.CHANNEL);
 
     private int mHandle;
     private String mName;
@@ -22,5 +22,16 @@ public enum UniformVariable {
 
     public String getName() {
         return mName;
+    }
+
+    public static class Constants {
+        public static final String UNI_PREF = "u_";
+        public static final String COLOR = "Color";
+        public static final String TEXTURE = "Texture";
+        public static final String MVP_MAT = "MVPMatrix";
+        public static final String ALPHA = "Alpha";
+        public static final String CHANNEL = "Channel";
+
+        private Constants() {}
     }
 }

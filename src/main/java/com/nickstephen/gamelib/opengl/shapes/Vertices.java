@@ -91,10 +91,6 @@ public class Vertices {
         mUsesAlpha = mProgram.usesVariable(UniformVariable.U_Alpha);
         mUsesChannelBalance = mProgram.usesVariable(UniformVariable.U_ChannelBalance);
 
-        if (mUsesChannelBalance && !mUsesMVPIndex) {
-            throw new RuntimeException("Not yet supported!"); //TODO: Add this
-        }
-
         mVertexStride = mPositionCount +
                 (mUsesMVPIndex ? MVP_MATRIX_INDEX_CNT : 0) +
                 (mUsesTextureCoords ? TEXCOORD_CNT : 0);
@@ -126,6 +122,50 @@ public class Vertices {
         }
 
         mScratch = new float[mNumVertices * mVertexStride];
+    }
+
+    protected Vertices(@NotNull Vertices prev, @NotNull Program program) {
+        mShape = prev.mShape;
+        mProgram = program;
+        mPositionCount = prev.mPositionCount;  // Set Position Component Count
+
+        mNumVertices = prev.mNumVertices;
+        mNumIndices = prev.mNumIndices;
+
+        mUsesColour = mProgram.usesVariable(UniformVariable.U_Colour);
+        mUsesTexture = mProgram.usesVariable(UniformVariable.U_Texture);
+        mUsesTextureCoords = mProgram.usesVariable(AttrVariable.A_TexCoordinate);
+        mUsesMVPIndex = mProgram.usesVariable(AttrVariable.A_MVPMatrixIndex);
+        mUsesAlpha = mProgram.usesVariable(UniformVariable.U_Alpha);
+        mUsesChannelBalance = mProgram.usesVariable(UniformVariable.U_ChannelBalance);
+
+        mVertexStride = mPositionCount +
+                (mUsesMVPIndex ? MVP_MATRIX_INDEX_CNT : 0) +
+                (mUsesTextureCoords ? TEXCOORD_CNT : 0);
+        // Calculate Vertex Stride
+        mVertexSize = mVertexStride * 4;        // Calculate Vertex Byte Size
+        mPrimitiveType = prev.mPrimitiveType;
+
+        mVertices = prev.mVertices;
+        mIndices = prev.mIndices;
+
+        // initialize the shader attribute handles
+        mTextureCoordinateHandle = AttrVariable.A_TexCoordinate.getHandle();
+        mMVPIndexHandle = AttrVariable.A_MVPMatrixIndex.getHandle();
+        mPositionHandle = AttrVariable.A_Position.getHandle();
+
+        if (mUsesTextureCoords) {
+            mTexCoords = prev.mTexCoords;
+        }
+
+        mScratch = prev.mScratch;
+        mVertexCoords = prev.mVertexCoords;
+        mMVPIndices = prev.mMVPIndices;
+        mTexCoords = prev.mTexCoords;
+    }
+
+    public @NotNull Vertices reset(@NotNull Program program) {
+        return new Vertices(this, program);
     }
 
     /**
@@ -187,8 +227,15 @@ public class Vertices {
         }
 
         if (mUsesChannelBalance) {
-            int channelHandle = GLES20.glGetUniformLocation(mProgram.getHandle(), UniformVariable.U_ChannelBalance.getName());
-            GLES20.glUniform4fv(channelHandle, mNumMVPMatrices, mShape.getChannel(), 0);
+            if (mChannelHandle == HANDLE_UNSET) {
+                mChannelHandle = GLES20.glGetUniformLocation(mProgram.getHandle(), UniformVariable.U_ChannelBalance.getName());
+            }
+
+            if (mUsesMVPIndex) {
+                GLES20.glUniform4fv(mChannelHandle, mNumMVPMatrices, mShape.getChannel(), 0);
+            } else {
+                GLES20.glUniform4fv(mChannelHandle, 1, mShape.getChannel(), 0);
+            }
         }
 
         // bind MVP Matrix index position handle

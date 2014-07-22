@@ -81,7 +81,7 @@ public class Container extends Shape implements IContainerDraw {
 
         setScreenSize(width, height); // Set the screen size and initialise some other fields
 
-        mColour = new float[]{1.0f, 0, 0, 1.0f}; // Set the bounding box colour to be red
+        setColour(1.f, 0.f, 0.f, 1.f); // Set the bounding box colour to be red
 
         mTouchSlop = ViewConfiguration.get(context).getScaledTouchSlop();
 
@@ -91,6 +91,15 @@ public class Container extends Shape implements IContainerDraw {
                 .setWidth(width).setHeight(height);
 
         moveTo(parentOffsetX, parentOffsetY);
+
+        width = mScreenWidth / 2.f;
+        height = mScreenHeight / 2.f;
+        mVertices.setVertices(new float[] {
+                - width, -height,
+                width, -height,
+                width, height,
+                -width, height
+        });
     }
 
     /**
@@ -166,7 +175,7 @@ public class Container extends Shape implements IContainerDraw {
      */
     public void draw(@NotNull float[] projMatrix, @NotNull float[] viewMatrix) {
         if (!VersionControl.IS_RELEASE) {
-            Matrix.translateM(mScratch, 0, viewMatrix, 0, mParentOffsetX, mParentOffsetY, 0);
+            Matrix.translateM(mScratch, 0, viewMatrix, 0, mParentOffsetX + this.getX(), mParentOffsetY + this.getY(), 0);
             System.arraycopy(mScratch, 0, mVPMatrix, 0, 16);
             draw(projMatrix);
         }
@@ -182,7 +191,7 @@ public class Container extends Shape implements IContainerDraw {
         Matrix.multiplyMM(mVPMatrix, 0, projMatrix, 0, mScratch, 0);
 
         GLES20.glEnable(GLES20.GL_SCISSOR_TEST);
-        GLES20.glScissor(getAbsoluteBLCornerX(), getAbsoluteBLCornerY(), (int) mScreenWidth, (int) mScreenHeight);
+        GLES20.glScissor((int)(getAbsoluteBLCornerX() + this.getX()), (int)(getAbsoluteBLCornerY() + this.getY()), (int) mScreenWidth, (int) mScreenHeight);
 
         synchronized (mChildren) {
             len = mChildren.size();

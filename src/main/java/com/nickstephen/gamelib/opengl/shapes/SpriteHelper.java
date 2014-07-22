@@ -3,6 +3,7 @@ package com.nickstephen.gamelib.opengl.shapes;
 import android.opengl.GLES20;
 import android.opengl.Matrix;
 
+import com.nickstephen.gamelib.opengl.program.Program;
 import com.nickstephen.gamelib.opengl.textures.TextureRegion;
 import com.nickstephen.lib.Twig;
 
@@ -68,6 +69,33 @@ public class SpriteHelper extends Vertices {
         }
     }
 
+    protected SpriteHelper(@NotNull SpriteHelper prev, @NotNull Program program) {
+        super(prev, program);
+
+        mNumSprites = prev.mNumSprites;
+        mModelMatrices = prev.mModelMatrices;
+        mMaxSprites = prev.mMaxSprites;
+    }
+
+    @NotNull
+    @Override
+    public Vertices reset(@NotNull Program program) {
+        return new SpriteHelper(this, program);
+    }
+
+    public void setMaxSprites(int maxSprites) {
+        if (maxSprites <= 0) {
+            Twig.debug("SpriteHelper", "Ignoring negative call to setMaxSprites");
+            return;
+        }
+
+        if (maxSprites * MAT4_SIZE > mModelMatrices.length) {
+            mModelMatrices = new float[MAT4_SIZE * maxSprites];
+        }
+
+        mMaxSprites = maxSprites;
+    }
+
     /**
      * Add a sprite to be displayed.
      * @param x The centre x offset of this sprite
@@ -79,7 +107,7 @@ public class SpriteHelper extends Vertices {
      */
     public void addSpriteToBatch(float x, float y, float width, float height, TextureRegion region,
                                  float[] modelMatrix) {
-        if (mNumSprites == mMaxSprites) {
+        if (mNumSprites >= mMaxSprites) {
             Twig.debug("SpriteHelper", "Max sprites reached, ignoring this new one");
             return;
         }

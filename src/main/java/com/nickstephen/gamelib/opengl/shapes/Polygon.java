@@ -10,8 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * <p>A class for drawing generic regular concave polygons (triangle, square, circle). Does fill
- * itself in, unlike {@link com.nickstephen.gamelib.opengl.Quadrilateral}.</p>
+ * <p>A class for drawing generic regular concave polygons (triangle, square, circle).</p>
  *
  * <p>Uses the GL_TRIANGLE_FAN primitive type to draw itself, so all shapes are essentially just
  * the same as each other but with more sides.</p>
@@ -56,16 +55,13 @@ public class Polygon extends Shape {
      * @param numberOfSides The number of sides for the shape. For circles I recommend 100 or more.
      * @param colour The starting colour of the shape's vertices.
      */
-    public Polygon(@NotNull Context context, @Nullable Container parent, float posX, float posY, float radius, float angle, int numberOfSides, float[] colour) {
+    public Polygon(@NotNull Context context, @Nullable Container parent, float posX, float posY, float radius, float angle, int numberOfSides, @NotNull float[] colour) {
         super(context, parent);
 
         mBoundsChecker = new Radial(this).setWidth(radius);
         mSideCount = numberOfSides;
 
-        if (colour.length != 4) {
-            throw new RuntimeException("Colour vector must be 4 long");
-        }
-        mColour = colour;
+        setColour(colour);
 
         mVertices = new Vertices(this, mSideCount + 1, mSideCount * 3, GLES20.GL_TRIANGLE_FAN);
 

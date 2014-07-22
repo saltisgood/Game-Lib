@@ -2,7 +2,9 @@ package com.nickstephen.gamelib.opengl.text;
 
 import android.content.Context;
 
+import com.nickstephen.gamelib.opengl.program.Program;
 import com.nickstephen.gamelib.opengl.shapes.AnimatedSprite;
+import com.nickstephen.gamelib.opengl.shapes.Sprite;
 import com.nickstephen.gamelib.opengl.shapes.SpriteHelper;
 import com.nickstephen.gamelib.opengl.Utilities;
 import com.nickstephen.gamelib.opengl.layout.Container;
@@ -353,6 +355,12 @@ public class Text extends SpriteBatch {
                 }
 
                 final int len = mText.length();
+
+                mProgram.dispose();
+                mProgram = Program.ProgramCreator.create(true, true, true, false, len, true);
+                mVertices = mVertices.reset(mProgram);
+                ((SpriteHelper) mVertices).setMaxSprites(len);
+
                 float adjust = (len % 2 == 0) ? mCharSize / 2.f : 0.f;
                 mChannelArr = new float[Utilities.QUAD_CHANNEL * len];
 

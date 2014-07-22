@@ -6,9 +6,9 @@ package com.nickstephen.gamelib.opengl.program;
  * with confidence as to which attribute it points to.
  */
 public enum AttrVariable {
-    A_Position(1, "a_Position"),
-    A_TexCoordinate(2, "a_TexCoordinate"),
-    A_MVPMatrixIndex(3, "a_MVPMatrixIndex");
+    A_Position(1, Constants.ATTR_PREF + Constants.POS),
+    A_TexCoordinate(2, Constants.ATTR_PREF + Constants.TEX_COORD),
+    A_MVPMatrixIndex(3, Constants.ATTR_PREF + Constants.MVP_INDEX);
 
     private int mHandle;
     private String mName;
@@ -29,4 +29,14 @@ public enum AttrVariable {
     public String getName() {
         return mName;
     }
+
+    public static class Constants {
+        public static final String ATTR_PREF = "a_";
+        public static final String POS = "Position";
+        public static final String TEX_COORD = "TexCoordinate";
+        public static final String MVP_INDEX = "MVPMatrixIndex";
+
+        private Constants() {}
+    }
+
 }

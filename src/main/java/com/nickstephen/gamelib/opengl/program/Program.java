@@ -9,6 +9,7 @@ import com.nickstephen.gamelib.util.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -20,6 +21,210 @@ import java.util.Map;
  * @author Nick Stephen
  */
 public class Program implements IDisposable {
+    public static final String VARYING_PREF = "v_";
+
+    private static final String uniform = "uniform ";
+    private static final String attribute = "attribute ";
+    private static final String varying = "varying ";
+
+    private static final String pos = "gl_Position";
+    private static final String colour = "gl_FragColor";
+
+    private static final String vec2 = "vec2 ";
+    private static final String vec4 = "vec4 ";
+    private static final String mat4 = "mat4 ";
+    private static final String flot = "float ";
+    private static final String it = "int ";
+    private static final String sampler2D = "sampler2D ";
+    private static final String tex2D = "texture2D";
+    private static final String dot = "dot";
+    private static final String clamp = "clamp";
+
+    private static final String func_sign = "void main() {\n";
+    private static final String func_end = "}\n";
+    private static final String line_end = ";\n";
+    private static final String eq = " = ";
+    private static final String mult = " * ";
+    private static final String medPrec = "precision mediump float" + line_end;
+
+    private static final String sampleTexStd = tex2D + "(" + UniformVariable.Constants.UNI_PREF + UniformVariable.Constants.TEXTURE
+            + ", " + VARYING_PREF + AttrVariable.Constants.TEX_COORD + ")";
+
+    public static class ProgramCreator {
+        private ProgramCreator() {}
+
+        public static Program create(boolean usesTexture, boolean usesChannels, boolean usesColour, boolean usesAlpha,
+                                     int numShapes, boolean textureStencil) {
+            StringBuilder sb = new StringBuilder();
+            sb.append(uniform + mat4 + UniformVariable.Constants.UNI_PREF + UniformVariable.Constants.MVP_MAT);
+            if (numShapes > 1) {
+                sb.append("[").append(numShapes).append("]");
+            }
+            sb.append(line_end);
+
+            if (usesChannels) {
+                sb.append(uniform + vec4 + UniformVariable.Constants.UNI_PREF + UniformVariable.Constants.CHANNEL);
+
+                if (numShapes > 1) {
+                    sb.append("[").append(numShapes).append("]");
+                }
+                sb.append(line_end);
+            }
+
+            if (numShapes > 1) {
+                sb.append(attribute + flot + AttrVariable.Constants.ATTR_PREF + AttrVariable.Constants.MVP_INDEX + line_end);
+            }
+
+            sb.append(attribute + vec4 + AttrVariable.Constants.ATTR_PREF + AttrVariable.Constants.POS + line_end);
+
+            if (usesTexture) {
+                sb.append(attribute + vec2 + AttrVariable.Constants.ATTR_PREF + AttrVariable.Constants.TEX_COORD + line_end);
+                sb.append(varying + vec2 + VARYING_PREF + AttrVariable.Constants.TEX_COORD + line_end);
+            }
+            if (usesChannels) {
+                sb.append(varying + vec4 + VARYING_PREF + UniformVariable.Constants.CHANNEL + line_end);
+            }
+
+            sb.append(func_sign);
+
+            if (numShapes > 1) {
+                sb.append(it + AttrVariable.Constants.MVP_INDEX + eq + it + "(" +
+                        AttrVariable.Constants.ATTR_PREF + AttrVariable.Constants.MVP_INDEX + ")" + line_end);
+            }
+
+            if (usesTexture) {
+                sb.append(VARYING_PREF + AttrVariable.Constants.TEX_COORD + eq +
+                        AttrVariable.Constants.ATTR_PREF + AttrVariable.Constants.TEX_COORD + line_end);
+            }
+
+            if (usesChannels) {
+                sb.append(VARYING_PREF + UniformVariable.Constants.CHANNEL + eq +
+                    UniformVariable.Constants.UNI_PREF + UniformVariable.Constants.CHANNEL);
+
+                if (numShapes > 1) {
+                    sb.append("[" + AttrVariable.Constants.MVP_INDEX + "]");
+                }
+
+                sb.append(line_end);
+            }
+
+            sb.append(pos + eq + UniformVariable.Constants.UNI_PREF + UniformVariable.Constants.MVP_MAT);
+            if (numShapes > 1) {
+                sb.append("[" + AttrVariable.Constants.MVP_INDEX + "]");
+            }
+            sb.append(mult + AttrVariable.Constants.ATTR_PREF + AttrVariable.Constants.POS + line_end + func_end);
+
+            String vertexShader = sb.toString();
+
+            sb.setLength(0);
+
+            if (usesTexture) {
+                sb.append(uniform + sampler2D + UniformVariable.Constants.UNI_PREF + UniformVariable.Constants.TEXTURE + line_end);
+            }
+
+            sb.append(medPrec);
+
+            if (usesTexture) {
+                sb.append(varying + vec2 + VARYING_PREF + AttrVariable.Constants.TEX_COORD + line_end);
+            }
+
+            if (usesChannels) {
+                sb.append(varying + vec4 + VARYING_PREF + UniformVariable.Constants.CHANNEL + line_end);
+            }
+
+            if (usesColour) {
+                sb.append(uniform + vec4 + UniformVariable.Constants.UNI_PREF + UniformVariable.Constants.COLOR + line_end);
+            } else if (usesAlpha) {
+                sb.append(uniform + flot + UniformVariable.Constants.UNI_PREF + UniformVariable.Constants.ALPHA + line_end);
+            }
+
+            sb.append(func_sign);
+
+            if (usesColour) {
+                if (usesTexture) {
+                    if (textureStencil) {
+                        sb.append(colour + eq + UniformVariable.Constants.UNI_PREF + UniformVariable.Constants.COLOR + line_end);
+
+                        if (usesChannels) {
+                            sb.append(colour + ".a" + eq + colour + ".a" + mult + clamp + "(" + dot + "(" + sampleTexStd
+                                + ", " + VARYING_PREF + UniformVariable.Constants.CHANNEL + "), 0.0, 1.0)" + line_end);
+                        } else {
+                            sb.append(colour + ".a" + eq + colour + ".a" + mult + sampleTexStd + line_end);
+                        }
+                    } else {
+                        sb.append(colour + eq + sampleTexStd + mult + UniformVariable.Constants.UNI_PREF + UniformVariable.Constants.COLOR + line_end);
+                    }
+                } else {
+                    sb.append(colour + eq + UniformVariable.Constants.UNI_PREF + UniformVariable.Constants.COLOR + line_end);
+                }
+            } else if (usesTexture) {
+                if (textureStencil) {
+                    sb.append(vec4 + "v " + eq + sampleTexStd + line_end);
+                    sb.append(flot + "f " + eq + "v.r + v.g + v.b + v.a" + line_end);
+                    sb.append(colour + eq + vec4 + "(f, f, f, f)" + line_end);
+                } else {
+                    sb.append(colour + eq + sampleTexStd + line_end);
+                }
+
+                if (usesAlpha) {
+                    sb.append(colour + ".a" + eq + colour + ".a" + mult +
+                            UniformVariable.Constants.UNI_PREF + UniformVariable.Constants.ALPHA + line_end);
+                }
+            } else {
+                throw new RuntimeException("Invalid specifications!");
+            }
+
+            sb.append(func_end);
+
+            String fragShader = sb.toString();
+
+            int arrSize = 1;
+            if (usesTexture) {
+                ++arrSize;
+            }
+            if (numShapes > 1) {
+                ++arrSize;
+            }
+            AttrVariable[] attrs = new AttrVariable[arrSize];
+            arrSize = 0;
+            attrs[arrSize++] = AttrVariable.A_Position;
+            if (usesTexture) {
+                attrs[arrSize++] = AttrVariable.A_TexCoordinate;
+            }
+            if (numShapes > 1) {
+                attrs[arrSize] = AttrVariable.A_MVPMatrixIndex;
+            }
+
+            arrSize = 1;
+            if (usesTexture) {
+                ++arrSize;
+            }
+            if (usesChannels) {
+                ++arrSize;
+            }
+            if (usesColour || usesAlpha) {
+                ++arrSize;
+            }
+
+            UniformVariable[] unis = new UniformVariable[arrSize];
+            unis[0] = UniformVariable.U_MVPMatrix;
+            arrSize = 1;
+            if (usesTexture) {
+                unis[arrSize++] = UniformVariable.U_Texture;
+            }
+            if (usesChannels) {
+                unis[arrSize++] = UniformVariable.U_ChannelBalance;
+            }
+            if (usesColour) {
+                unis[arrSize] = UniformVariable.U_Colour;
+            } else if (usesAlpha) {
+                unis[arrSize] = UniformVariable.U_Alpha;
+            }
+
+            return Manager.get(vertexShader, fragShader, attrs, unis);
+        }
+    }
+
     public static class TestTextProgram {
         private static final AttrVariable[] programVariables = {
                 AttrVariable.A_Position, AttrVariable.A_TexCoordinate, AttrVariable.A_MVPMatrixIndex
@@ -123,7 +328,7 @@ public class Program implements IDisposable {
 
     public static class GenericProgram {
         private static final AttrVariable[] attrVariables = { AttrVariable.A_Position };
-        private static final UniformVariable[] uniVariables = { UniformVariable.U_Colour, UniformVariable.U_MVPMatrix, UniformVariable.U_Alpha };
+        private static final UniformVariable[] uniVariables = { UniformVariable.U_Colour, UniformVariable.U_MVPMatrix };
 
         private static final String vertexShaderCode =
                 // This matrix member variable provides a hook to manipulate
@@ -140,12 +345,8 @@ public class Program implements IDisposable {
         private static final String fragmentShaderCode =
                 "precision mediump float;" +
                         "uniform vec4 u_Color;" +
-                        "uniform float u_Alpha;" +
                         "void main() {" +
-                        /////"  gl_FragColor = u_Color * u_Alpha;" +
-                        //"  gl_FragColor.a = u_Alpha;" +
                         "gl_FragColor = u_Color;"
-                        + "gl_FragColor.a = u_Alpha;"
                         + "}";
 
         private GenericProgram() {}
@@ -188,8 +389,8 @@ public class Program implements IDisposable {
 
                         + "void main()                    \n"     // The entry point for our fragment shader.
                         + "{                              \n"
-                        + "   gl_FragColor = texture2D(u_Texture, v_TexCoordinate) * u_Alpha;\n" // texture is grayscale so take only grayscale value from
-                        // it when computing color output (otherwise font is always black)
+                        + "   gl_FragColor = texture2D(u_Texture, v_TexCoordinate);\n"
+                        + "gl_FragColor.a = gl_FragColor.a * u_Alpha;\n"
                         + "}                             \n";
 
         private SpriteProgram() {}

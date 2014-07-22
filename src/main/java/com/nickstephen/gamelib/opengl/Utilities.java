@@ -4,6 +4,7 @@ import android.opengl.GLES20;
 import android.util.Log;
 
 import com.nickstephen.gamelib.opengl.program.AttrVariable;
+import com.nickstephen.lib.Twig;
 
 import org.jetbrains.annotations.Nullable;
 
@@ -73,7 +74,7 @@ public class Utilities {
 
             if (linkStatus[0] == 0)
             {
-                Log.v(TAG, GLES20.glGetProgramInfoLog(mProgram));
+                Twig.debug(TAG, GLES20.glGetShaderInfoLog(mProgram));
                 GLES20.glDeleteProgram(mProgram);
                 mProgram = 0;
             }
@@ -116,7 +117,7 @@ public class Utilities {
             // If the compilation failed, delete the shader.
             if (compileStatus[0] == 0)
             {
-                Log.v(TAG, "Shader fail info: " + GLES20.glGetShaderInfoLog(shaderHandle));
+                Twig.debug(TAG, "Shader fail info: " + GLES20.glGetShaderInfoLog(shaderHandle));
                 GLES20.glDeleteShader(shaderHandle);
                 shaderHandle = 0;
             }

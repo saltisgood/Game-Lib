@@ -36,7 +36,7 @@ import org.jetbrains.annotations.Nullable;
  * @author Nick Stephen
  */
 public abstract class Shape implements IGestures, IDraw, IDisposable {
-    protected final Program mProgram;
+    protected Program mProgram;
     /**
      * A 4x4 float matrix pre-allocated here and whose contents can not be trusted in between
      * method calls. Useful as a matrix whose contents are needed only briefly and repeatedly.
@@ -162,10 +162,11 @@ public abstract class Shape implements IGestures, IDraw, IDisposable {
      * @param colour The float array representation of the colour
      */
     public void setColour(@NotNull float[] colour) {
-        if (colour.length != 4) {
+        if (colour.length < 4) {
             throw new RuntimeException("Colour vector must be of length 4");
         }
-        mColour = colour;
+
+        System.arraycopy(colour, 0, mColour, 0, 4);
     }
 
     /**
